@@ -40,10 +40,11 @@ Déjà fait sur la machine de dev (clé validée sur les 2 API).
 
 ## Étape 5 — Signature SignPath (voir GUIDE_SIGNATURE_SIGNPATH.md)
 
-1. https://signpath.io → **Sign in with GitHub** (le nouveau compte public).
-2. Créer l'organisation SignPath → *Add project → Open Source request*.
-3. Formulaire pré-rempli dans `docs/GUIDE_SIGNATURE_SIGNPATH.md`.
-4. Après approbation : secrets `SIGNPATH_API_TOKEN` +
+1. https://signpath.org/apply.html → formulaire de candidature direct
+   (pas de compte à créer avant — l'accès SignPath.io vient APRÈS approbation).
+2. Formulaire pré-rempli dans `docs/GUIDE_SIGNATURE_SIGNPATH.md`
+   (repo : `github.com/art-qalam-fr/CerbereShield`).
+3. Après approbation : secrets `SIGNPATH_API_TOKEN` +
    `SIGNPATH_ORGANIZATION_ID` dans le repo public → activer le workflow
    `.github/workflows/release-sign.yml` (squelette fourni dans le guide).
 

@@ -1,0 +1,105 @@
+# Build + signature SignPath — Cerbere Security Shield
+#
+# Secrets requis (repo Settings → Secrets and variables → Actions) :
+#   SIGNPATH_API_TOKEN         — token API SignPath (My profile → Generate token)
+#   SIGNPATH_ORGANIZATION_ID   — GUID de l'organisation SignPath
+#
+# Declenchement : Actions → "Release signee" → Run workflow.
+# La policy "test-signing" utilise le certificat auto-signe ; apres
+# approbation SignPath Foundation, passer signing_policy a "release-signing".
+
+name: Release signée
+
+on:
+  workflow_dispatch:
+    inputs:
+      project_slug:
+        description: "Slug du projet SignPath"
+        required: true
+        default: "Cerbere_Security_Shield"
+      signing_policy:
+        description: "Policy de signature"
+        required: true
+        default: "test-signing"
+      publish_release:
+        description: "Creer une GitHub Release avec les artefacts signes"
+        type: boolean
+        required: true
+        default: false
+
+permissions:
+  contents: write   # upload-artifact + release
+  actions: read     # l'action SignPath telecharge l'artefact via github-token
+
+jobs:
+  build-and-sign:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Dependances Python
+        run: |
+          python -m venv .venv
+          .venv\Scripts\python.exe -m pip install --upgrade pip
+          .venv\Scripts\python.exe -m pip install -r requirements.txt pyinstaller
+
+      - name: Inno Setup
+        run: |
+          choco install innosetup -y --no-progress
+          echo "C:\Program Files (x86)\Inno Setup 6" >> $env:GITHUB_PATH
+
+      - name: Build (exe + installeur)
+        run: packaging\build.bat
+
+      - name: Zip des binaires a signer
+        run: |
+          Compress-Archive -Path "dist\CerbereShield\CerbereShield.exe","dist\installer\CerbereShield_Setup.exe" -DestinationPath "signing-input.zip" -Force
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: unsigned-package
+          path: signing-input.zip
+
+      - name: Signature SignPath
+        uses: signpath/github-action-submit-signing-request@v1
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ secrets.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ inputs.project_slug }}
+          signing-policy-slug: ${{ inputs.signing_policy }}
+          github-artifact-name: unsigned-package
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          output-artifact-directory: signed
+          wait-for-completion: true
+          wait-for-completion-timeout-in-seconds: 600
+
+      - name: Extraction des binaires signes
+        run: |
+          Get-ChildItem signed -Recurse -Filter *.zip | ForEach-Object {
+            Expand-Archive $_.FullName -DestinationPath signed -Force
+          }
+          Get-ChildItem signed -Recurse
+
+      - name: Verification des signatures (Authenticode)
+        run: |
+          Get-ChildItem signed -Recurse -Include *.exe,*.dll | ForEach-Object {
+            $sig = Get-AuthenticodeSignature $_.FullName
+            "{0} -> {1} ({2})" -f $_.Name, $sig.Status, $sig.SignerCertificate.Subject
+          }
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: signed-package
+          path: signed
+
+      - name: Release GitHub (optionnel)
+        if: inputs.publish_release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ github.run_number }}
+          name: Cerbere Shield build ${{ github.run_number }} (signe)
+          files: signed/**/*.exe

@@ -6,13 +6,11 @@ certificat de confiance de la SignPath Foundation → SmartScreen propre,
 
 ## Prérequis (à faire par le propriétaire — ~10 min)
 
-1. **Repo public obligatoire.** Le programme OSS de SignPath exige un dépôt
-   public avec licence OSI (MIT ✅ déjà en place). Le repo privé ArchNext doit
-   donc être remplacé par le repo public nettoyé (voir procédure d'export).
-2. **Créer le compte** : https://signpath.io → *Sign in with GitHub*
-   (OAuth — impossible à automatiser, c'est votre identité + MFA).
-3. **Créer l'organisation SignPath** (ex. `cerbere-shield`).
-4. **Soumettre le projet** : *Add project → Open Source subscription request*.
+1. **Repo public obligatoire** — ✅ fait : `https://github.com/art-qalam-fr/CerbereShield` (licence MIT, fichier `LICENSE` à la racine).
+2. **Candidature** : https://signpath.org/apply.html — formulaire direct,
+   **pas besoin de compte SignPath au préalable** (l'accès à l'organisation
+   SignPath est accordé APRÈS approbation).
+3. Champ « Download / Release URL » : `https://github.com/art-qalam-fr/CerbereShield/releases`
 
 ## Formulaire — valeurs prêtes à copier
 
@@ -20,8 +18,8 @@ certificat de confiance de la SignPath Foundation → SmartScreen propre,
 |---|---|
 | Project name | `Cerbere Security Shield` |
 | Description | `Windows security suite: network port monitoring, DNS ad/tracker/parental blocking, firewall hardening plans, systray client.` |
-| Repository URL | `https://github.com/<nouveau-compte>/CerbereShield` |
-| Website | `https://github.com/<nouveau-compte>/CerbereShield` |
+| Repository URL | `https://github.com/art-qalam-fr/CerbereShield` |
+| Website | `https://github.com/art-qalam-fr/CerbereShield` |
 | License | `MIT` |
 | Privacy policy URL | lien vers `PRIVACY.md` du repo public |
 | Development model | `Open source, releases via GitHub Actions` |
