@@ -55,18 +55,16 @@ jobs:
       - name: Build (exe + installeur)
         run: packaging\build.bat
 
-      - name: Zip des binaires a signer
-        run: |
-          Compress-Archive -Path "dist\CerbereShield\CerbereShield.exe","dist\installer\CerbereShield_Setup.exe" -DestinationPath "signing-input.zip" -Force
-
       - uses: actions/upload-artifact@v4
         id: upload
         with:
           name: unsigned-package
-          path: signing-input.zip
+          path: |
+            dist\CerbereShield\CerbereShield.exe
+            dist\installer\CerbereShield_Setup.exe
 
       - name: Signature SignPath
-        uses: signpath/github-action-submit-signing-request@v1
+        uses: signpath/github-action-submit-signing-request@v3
         with:
           api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
           organization-id: ${{ secrets.SIGNPATH_ORGANIZATION_ID }}
