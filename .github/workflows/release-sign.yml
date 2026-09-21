@@ -16,11 +16,11 @@ on:
       project_slug:
         description: "Slug du projet SignPath"
         required: true
-        default: "Cerbere_Security_Shield"
+        default: "cerbere-security-shield"
       signing_policy:
         description: "Policy de signature"
         required: true
-        default: "test-signing"
+        default: "Test_signing"
       publish_release:
         description: "Creer une GitHub Release avec les artefacts signes"
         type: boolean
@@ -55,26 +55,44 @@ jobs:
       - name: Build (exe + installeur)
         run: packaging\build.bat
 
-      - uses: actions/upload-artifact@v4
-        id: upload
-        with:
-          name: unsigned-package
-          path: |
-            dist\CerbereShield\CerbereShield.exe
-            dist\installer\CerbereShield_Setup.exe
+      - name: Zip des binaires a signer
+        run: |
+          Compress-Archive -Path "dist\CerbereShield\CerbereShield.exe","dist\installer\CerbereShield_Setup.exe" -DestinationPath "signing-input.zip" -Force
 
-      - name: Signature SignPath
-        uses: signpath/github-action-submit-signing-request@v3
-        with:
-          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
-          organization-id: ${{ secrets.SIGNPATH_ORGANIZATION_ID }}
-          project-slug: ${{ inputs.project_slug }}
-          signing-policy-slug: ${{ inputs.signing_policy }}
-          github-artifact-id: ${{ steps.upload.outputs.artifact-id }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          output-artifact-directory: signed
-          wait-for-completion: true
-          wait-for-completion-timeout-in-seconds: 600
+      - name: Signature via API REST SignPath
+        env:
+          SIGNPATH_API_TOKEN: ${{ secrets.SIGNPATH_API_TOKEN }}
+          SIGNPATH_ORG: ${{ secrets.SIGNPATH_ORGANIZATION_ID }}
+          PROJECT: ${{ inputs.project_slug }}
+          POLICY: ${{ inputs.signing_policy }}
+        run: |
+          $base = "https://app.signpath.io/API/v1/$env:SIGNPATH_ORG"
+          $h = @{ Authorization = "Bearer $env:SIGNPATH_API_TOKEN" }
+
+          Write-Host "Soumission de signing-input.zip ($env:PROJECT / $env:POLICY)..."
+          $resp = Invoke-RestMethod -Uri "$base/SigningRequests/SubmitWithArtifact" -Method Post -Headers $h -Form @{
+            projectSlug       = $env:PROJECT
+            signingPolicySlug = $env:POLICY
+            description       = "CerbereShield CI build $($env:GITHUB_RUN_NUMBER)"
+            artifact          = Get-Item "signing-input.zip"
+          }
+          $id = $resp.signingRequest.id
+          if (-not $id) { $id = $resp.signingRequestId }
+          if (-not $id) { $resp | ConvertTo-Json -Depth 5; throw "Pas d'id de signing request dans la reponse" }
+          Write-Host "Signing request id: $id"
+
+          do {
+            Start-Sleep 15
+            $s = Invoke-RestMethod -Uri "$base/SigningRequests/$id/Status" -Headers $h
+            Write-Host "Statut: $($s.status)"
+          } while ($s.status -notin @('Completed','Failed','Canceled','Denied'))
+
+          if ($s.status -ne 'Completed') { throw "Signature echouee: $($s.status)" }
+
+          New-Item -ItemType Directory -Path signed -Force | Out-Null
+          Invoke-WebRequest -Uri "$base/SigningRequests/$id/SignedArtifact" -Headers $h -OutFile signed.zip
+          Expand-Archive signed.zip -DestinationPath signed -Force
+          Get-ChildItem signed -Recurse
 
       - name: Extraction des binaires signes
         run: |
