@@ -26,6 +26,10 @@ on:
         type: boolean
         required: true
         default: false
+      release_tag:
+        description: "Tag de la release (si publication)"
+        required: false
+        default: "v0.9.0-beta"
 
 permissions:
   contents: write   # upload-artifact + release
@@ -117,6 +121,7 @@ jobs:
         if: inputs.publish_release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ github.run_number }}
-          name: Cerbere Shield build ${{ github.run_number }} (signe)
+          tag_name: ${{ inputs.release_tag }}
+          name: Cerbere Shield ${{ inputs.release_tag }} (signe)
+          prerelease: ${{ startsWith(inputs.release_tag, 'v1.') == false }}
           files: signed/**/*.exe

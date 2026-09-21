@@ -28,7 +28,7 @@ robocopy "%SRC%" "%DST%" /MIR /NFL /NDL /NJH /NP /R:1 /W:1 ^
       memory-database publish_staging semantic-cache-data tasks ^
       "PRD*" __pycache__ state node_modules bin obj publish ^
   /XF .env *.pyc *.db-shm *.db-wal audit_data.json AGENTS.md .DS_Store ^
-      *.code-workspace image.png
+      *.code-workspace image.png nul
 
 if errorlevel 8 (
   echo [ERREUR] robocopy a echoue.
@@ -41,8 +41,18 @@ pushd "%DST%"
 
 if not exist ".git" git init -b main
 git add -A
-git -c user.name="Cerbere Shield" -c user.email="contact@cerbere-shield.local" ^
-    commit -m "Cerbere Security Shield - public release" --allow-empty
+if errorlevel 1 (
+  echo [ERREUR] git add a echoue ^(index verrouille ?^).
+  popd
+  exit /b 1
+)
+git diff --cached --quiet
+if not errorlevel 1 (
+  echo [INFO] Aucun changement a commiter.
+) else (
+  git -c user.name="Cerbere Shield" -c user.email="contact@cerbere-shield.local" ^
+      commit -m "Cerbere Security Shield - public release"
+)
 
 echo.
 echo Prochaines etapes :
