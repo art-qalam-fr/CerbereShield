@@ -60,6 +60,7 @@ jobs:
           Compress-Archive -Path "dist\CerbereShield\CerbereShield.exe","dist\installer\CerbereShield_Setup.exe" -DestinationPath "signing-input.zip" -Force
 
       - uses: actions/upload-artifact@v4
+        id: upload
         with:
           name: unsigned-package
           path: signing-input.zip
@@ -71,7 +72,7 @@ jobs:
           organization-id: ${{ secrets.SIGNPATH_ORGANIZATION_ID }}
           project-slug: ${{ inputs.project_slug }}
           signing-policy-slug: ${{ inputs.signing_policy }}
-          github-artifact-name: unsigned-package
+          github-artifact-id: ${{ steps.upload.outputs.artifact-id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           output-artifact-directory: signed
           wait-for-completion: true
