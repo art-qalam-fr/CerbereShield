@@ -1,72 +1,191 @@
-# Guide — Signature du code avec SignPath (gratuit, open source)
+# Guide — Signature du code avec SignPath (procédure réelle, validée)
 
-Objectif : faire signer `CerbereShield.exe` et `CerbereShield_Setup.exe` par le
-certificat de confiance de la SignPath Foundation → SmartScreen propre,
-éditeur identifié, zéro coût.
+> **Statut : pipeline de signature FONCTIONNEL** — vérifié de bout en bout le
+> 2026-09-21 (run GitHub Actions vert, `CerbereShield.exe` et
+> `CerbereShield_Setup.exe` signés avec le certificat de test).
 
-## Prérequis (à faire par le propriétaire — ~10 min)
+Ce document décrit la procédure **telle qu'elle a réellement fonctionné** —
+l'interface SignPath actuelle (v1.219) diffère de la documentation officielle
+sur plusieurs points. Les pièges rencontrés sont notés au fil des étapes.
 
-1. **Repo public obligatoire** — ✅ fait : `https://github.com/art-qalam-fr/CerbereShield` (licence MIT, fichier `LICENSE` à la racine).
-2. **Candidature** : https://signpath.org/apply.html — formulaire direct,
-   **pas besoin de compte SignPath au préalable** (l'accès à l'organisation
-   SignPath est accordé APRÈS approbation).
-3. Champ « Download / Release URL » : `https://github.com/art-qalam-fr/CerbereShield/releases`
+---
 
-## Formulaire — valeurs prêtes à copier
+## État actuel (où on en est)
+
+| Élément | Valeur / Statut |
+|---|---|
+| Organisation SignPath | `art-qalam-fr` — ID `4c68f7ab-9667-433f-9f08-34f2ef420477` |
+| Projet | slug `cerbere-security-shield` |
+| Signing policy | slug `Test_signing` (attention : underscore, T majuscule) |
+| Certificat | `Cerbere Test Cert` — X.509 auto-signé, valable 1 an |
+| Secrets GitHub | `SIGNPATH_API_TOKEN` + `SIGNPATH_ORGANIZATION_ID` ✅ posés |
+| Workflow | `.github/workflows/release-sign.yml` — **API REST directe**, vert ✅ |
+| Artefact signé | dans le run : **Artifacts → `signed-package`** |
+
+## Usage courant (une fois tout configuré — c'est juste ça)
+
+**Actions → Release signée → Run workflow** → ~7 min → télécharger
+l'artefact `signed-package` → les exe signés sont dedans.
+
+Pour publier : relancer avec `publish_release` coché → crée une GitHub
+Release avec les exe signés en pièces jointes.
+
+---
+
+## Procédure complète (pour refaire de zéro)
+
+### 1. Compte et projet SignPath
+
+1. Créer un compte sur `app.signpath.io` (email + mot de passe — **pas** de
+   login GitHub).
+2. **Projects → Create** :
+   - Name : `Cerbere Security Shield`
+   - ⚠️ Le **slug** est auto-généré — noter la valeur exacte affichée après
+     création (chez nous : `cerbere-security-shield`). C'est elle qu'il faut
+     dans le workflow, pas le nom.
+   - Repository URL : `https://github.com/art-qalam-fr/CerbereShield`
+   - Artifact configuration : **Portable Executable files (.exe, .dll)**
+   - Cocher **« Sign multiple files »** → structure `zip-file → pe-file`
+   - « Create and add signing policy »
+
+### 2. Certificat de test
+
+1. **Certificates** (menu gauche) → **Create a self-signed X.509 certificate**
+   - Name `Cerbere Test Cert`, slug `cerbere-test-cert`
+   - Key store : Software — Key algorithm : RSA 4096 — Validité : 1 an
+     (recommandé, les signatures timestampées restent valides après)
+   - Champs X.509 cosmétiques (CN=`Cerbere Security Shield`, O=`art-qalam-fr`…)
+2. Télécharger le `.cer` (format Windows, clé publique uniquement).
+3. Pour un test local : double-clic → Installer → **Utilisateur actuel** →
+   « Placer dans le magasin suivant » → **Autorités de certification racines
+   de confiance**. Ne rend la signature valide QUE sur cette machine —
+   SmartScreen reste affiché chez les autres utilisateurs.
+
+### 3. Signing policy
+
+**Projects → Cerbere Security Shield → Signing policies → Add** :
+
+| Champ | Valeur |
+|---|---|
+| Name | `Test signing` |
+| Slug | `Test_signing` — relever la valeur EXACTE créée (underscore !) |
+| Purpose | `Any` |
+| Certificate | `Cerbere Test Cert` (créé à l'étape 2 — sinon la liste est vide) |
+| Submitters | soi-même |
+| Use approval process / trusted build system / origin policy | ⬜ tout décoché |
+
+### 4. API token
+
+⚠️ **Piège UI** : pas de menu « API tokens » dans l'organisation. Le token est
+au niveau **utilisateur** :
+
+1. Cliquer son **nom/avatar en haut à droite** → **My profile**
+2. Section **API Token** → **Generate token**
+3. **Copier immédiatement** — affiché une seule fois
+
+### 5. Secrets GitHub
+
+Repo `art-qalam-fr/CerbereShield` → **Settings → Secrets and variables →
+Actions → Repository secrets** (PAS environment, PAS organization) :
+
+- `SIGNPATH_API_TOKEN` = le token
+- `SIGNPATH_ORGANIZATION_ID` = `4c68f7ab-9667-433f-9f08-34f2ef420477`
+
+💡 Méthode infaillible (zéro faute de frappe) :
+
+```powershell
+"LE_TOKEN" | gh secret set SIGNPATH_API_TOKEN -R art-qalam-fr/CerbereShield
+```
+
+### 6. Artifact configuration — ⚠️ LE piège final
+
+Le template par défaut contient `<include path="sample.exe" />` — SignPath
+cherche littéralement `sample.exe` → erreur *« Expected path to match exactly
+1 item, but found 0 »*. Éditer la config (Projects → projet → artifact
+configuration → Edit) :
+
+```xml
+<?xml version="1.0" encoding="utf-8" ?>
+<artifact-configuration xmlns="http://signpath.io/artifact-configuration/v1">
+  <zip-file>
+    <pe-file-set>
+      <include path="*.exe" min-matches="1" max-matches="unbounded" />
+      <include path="*.dll" min-matches="0" max-matches="unbounded" />
+      <for-each>
+        <authenticode-sign />
+      </for-each>
+    </pe-file-set>
+  </zip-file>
+</artifact-configuration>
+```
+
+### 7. Workflow — pourquoi l'API REST et pas l'action officielle
+
+L'action `signpath/github-action-submit-signing-request` passe par le
+**connecteur GitHub**, qui exige un « Trusted Build System GitHub.com » déclaré
+dans l'organisation — or la nouvelle UI n'expose plus le bouton
+« Add predefined » (la doc officielle est obsolète) → erreur
+*« Trusted build system is not allowed to log into the organization »*.
+
+Le workflow utilise donc l'**API REST directement** (documentée,
+`SubmitWithArtifact`), qui suffit pour une policy de test sans vérification
+d'origine :
+
+```
+POST   /API/v1/{org}/SigningRequests/SubmitWithArtifact   (multipart, le zip)
+GET    /API/v1/{org}/SigningRequests/{id}/Status          (polling)
+GET    /API/v1/{org}/SigningRequests/{id}/SignedArtifact  (zip signé)
+```
+
+Voir `.github/workflows/release-sign.yml`. Tester le token à la main :
+
+```powershell
+Invoke-WebRequest "https://app.signpath.io/API/v1/<ORG_ID>/SigningRequests" `
+  -Headers @{Authorization="Bearer <TOKEN>"}   # 200 = token OK
+```
+
+### Erreurs rencontrées et leur signification
+
+| Erreur | Cause réelle |
+|---|---|
+| `Input required and not supplied: api-token` | secret absent ou mal nommé |
+| `Could not authorize against SignPath API` | token invalide dans le secret |
+| `No matching entity was found` | mauvais slug projet/policy |
+| `Trusted build system is not allowed...` | connecteur GitHub non autorisé → passer en REST |
+| `Expected path to match exactly 1 item, but found 0` | `sample.exe` resté dans l'artifact config |
+| `Status: UnknownError` dans `Get-AuthenticodeSignature` | normal : cert auto-signé non installé en racine sur cette machine |
+
+---
+
+## Étapes restantes
+
+### Court terme
+- [ ] **Candidature SignPath Foundation** : https://signpath.org/apply.html
+      (formulaire direct, valeurs ci-dessous). Délai : quelques jours.
+- [ ] Distribuer le build signé-test au collaborateur via l'artefact
+      `signed-package` d'un run vert (SmartScreen affichera l'avertissement
+      chez lui — normal en auto-signé).
+
+### Après approbation Foundation (certificat de confiance → SmartScreen propre)
+- [ ] Créer la policy `release-signing` avec le certificat Foundation
+- [ ] La Foundation exige la **vérification d'origine** → il faudra alors le
+      connecteur GitHub (trusted build system) — le point sera à régler avec
+      leur support si l'UI ne l'expose toujours pas
+- [ ] Lancer le workflow avec `signing_policy=release-signing` et
+      `publish_release` coché → Release publique avec l'installeur signé
+- [ ] Ajouter le lien Releases dans le README public
+
+### Formulaire Foundation — valeurs prêtes à copier
 
 | Champ | Valeur |
 |---|---|
 | Project name | `Cerbere Security Shield` |
-| Description | `Windows security suite: network port monitoring, DNS ad/tracker/parental blocking, firewall hardening plans, systray client.` |
 | Repository URL | `https://github.com/art-qalam-fr/CerbereShield` |
-| Website | `https://github.com/art-qalam-fr/CerbereShield` |
 | License | `MIT` |
-| Privacy policy URL | lien vers `PRIVACY.md` du repo public |
-| Development model | `Open source, releases via GitHub Actions` |
+| Download / Release URL | `https://github.com/art-qalam-fr/CerbereShield/releases` |
+| Description | `Free Windows security suite: real-time network port monitoring, DNS-based ad/tracker/parental blocking (EasyList, AdGuard, OISD, HaGeZi), firewall hardening, intrusion detection, systray client. 100% local, no telemetry.` |
 
-## Après approbation (délai : quelques jours)
+## Alternative payante (si SignPath Foundation tarde)
 
-SignPath fournit : **Organization ID**, **API token**, **signing policy**
-(`release-signing`). À mettre dans les secrets du repo public :
-
-- `SIGNPATH_API_TOKEN`
-- `SIGNPATH_ORGANIZATION_ID`
-
-## Intégration CI (workflow prêt)
-
-Le signataire standard est l'action `signpath/github-action-submit-signing-request`
-qui signe un artefact produit par le workflow (l'exe est donc **buildé en CI**
-puis signé — c'est ce qui donne la provenance vérifiable qu'exige SignPath) :
-
-```yaml
-# .github/workflows/release-sign.yml — squelette à activer après approbation
-name: Release signée
-on:
-  workflow_dispatch:
-jobs:
-  build-sign:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with: { python-version: "3.13" }
-      - run: pip install -r requirements.txt pyinstaller
-      - run: packaging\build.bat            # produit dist\CerbereShield\
-      - uses: actions/upload-artifact@v4    # artefact à signer
-        with:
-          name: CerbereShield-unsigned
-          path: dist/CerbereShield/CerbereShield.exe
-      - uses: signpath/github-action-submit-signing-request@v1
-        with:
-          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
-          organization-id: ${{ secrets.SIGNPATH_ORGANIZATION_ID }}
-          project-slug: cerbere-shield
-          signing-policy-slug: release-signing
-          github-artifact-id: <id de l'artefact uploadé>
-          output-artifact-directory: signed
-```
-
-## Alternative si repo privé conservé
-
-Azure Trusted Signing (~10 $/mois, confiance SmartScreen immédiate,
-fonctionne avec un repo privé).
+Azure Trusted Signing (~10 $/mois) : confiance SmartScreen immédiate,
+fonctionne aussi avec un repo privé.
