@@ -1,0 +1,38 @@
+Cerbere Security Shield
+=======================
+
+This product includes or uses the following third-party components:
+
+1. WinDivert — https://reqrypt.org/windivert.html
+   License: LGPLv3 (see licenses/LGPL-3.0.txt). The official signed
+   driver and DLL are used unmodified via dynamic linking.
+
+2. pydivert — https://github.com/ffalcinelli/pydivert
+   License: LGPLv3 (see licenses/LGPL-3.0.txt). Python binding for
+   WinDivert, installed via pip.
+
+3. EasyList & EasyPrivacy — https://easylist.to/
+   © The EasyList authors (https://easylist.to/).
+   License: GPLv3 or CC BY-SA 3.0, dual license (see licenses/).
+   The lists are downloaded unmodified from easylist.to on the
+   end-user's machine and are never redistributed by this project.
+
+4. AdGuard DNS Filter — https://github.com/AdguardTeam/AdGuardSDNSFilter
+   License: GPLv3.
+   Downloaded unmodified from the official repository at runtime;
+   never redistributed by this project.
+
+5. OISD — https://oisd.nl
+   License: GPLv3.
+   Downloaded unmodified from https://big.oisd.nl at runtime;
+   never redistributed by this project.
+
+6. HaGeZi DNS Blocklists — https://github.com/hagezi/dns-blocklists
+   License: GPLv3.
+   Downloaded unmodified from the official repository at runtime;
+   never redistributed by this project.
+
+7. MalwareBazaar — https://bazaar.abuse.ch/
+   Free API by abuse.ch, used for SHA-256 reputation lookups only.
+
+All other components are native Windows APIs or first-party code.

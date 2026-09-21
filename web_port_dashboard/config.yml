@@ -1,0 +1,25 @@
+debug: false
+critical_ports:
+- 22
+- 80
+- 443
+- 3306
+- 3389
+- 5432
+allowed_ports: []
+allowed_processes: []
+scan_interval_seconds: 30
+notify_grace_seconds: 60
+filter_autostart: true
+use_remote_whitelist: true
+external_alerts_enabled: true
+alert_email: ''
+webhook_url: ''
+smtp_host: ''
+smtp_user: ''
+smtp_port: 465
+external_min_severity: 90
+access:
+  enabled: true
+  method: windows
+ui_language: fr

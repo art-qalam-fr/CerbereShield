@@ -1,0 +1,79 @@
+# ============================================================
+# Security Sheeld - .gitignore
+# ============================================================
+
+# ===== Secrets & configuration locale =====
+.env
+.env.*
+*.pem
+*.key
+*.pfx
+*.p12
+*.keystore
+credentials*
+secrets*.json
+
+# ===== Python =====
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# ===== Données runtime (posture de sécurité de la machine) =====
+logs/
+*.log
+audit_data.json
+web_port_dashboard/state/
+web_port_dashboard/hardening_plan.json
+*.db
+*.sqlite
+*.sqlite3
+*.db-shm
+*.db-wal
+
+# ===== Artefacts de build .NET (auto-contenus, très lourds) =====
+systray_client/bin/
+systray_client/obj/
+systray_client/publish/
+systray_client/publish_staging/
+publish_staging/
+
+# ===== Infrastructure agent locale (mémoire, logs, knowledge) =====
+.agent/
+memory-database
+semantic-cache-data/
+tasks/
+
+# ===== Backups & archives =====
+backup/
+*.zip
+*.backup
+*.bak
+*~
+
+# ===== Rapports générés (données de sécurité de l'hôte) =====
+docs/security_sheeld_audit_*.pdf
+docs/audit_*.pdf
+
+# ===== OS / IDE =====
+Thumbs.db
+Desktop.ini
+*.lnk
+.vs/
+.idea/
+
+# ===== Listes de filtrage téléchargées (EasyList — ne jamais redistribuer) =====
+easylist*.txt
+easyprivacy*.txt
+**/filter_lists/
+tracker_filter/state/
+
+# Assets sources utilisateur (non distribues)
+logo/
+image.png
+
+# Artefacts de build PyInstaller / Inno Setup
+build/
+dist/

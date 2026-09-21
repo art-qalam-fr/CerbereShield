@@ -1,0 +1,6 @@
+fastapi
+uvicorn[standard]
+psutil
+pyyaml
+python-dateutil
+pydivert>=3.1

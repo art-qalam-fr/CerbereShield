@@ -1,0 +1,28 @@
+{
+  "database_path": "logs/intrusion_detection.db",
+  "whitelist": [
+    "127.0.0.1",
+    "::1",
+    "192.168.0.0/16",
+    "10.0.0.0/8",
+    "172.16.0.0/12"
+  ],
+  "failed_login_threshold": 5,
+  "failed_login_window": 300,
+  "port_scan_threshold": 10,
+  "port_scan_window": 60,
+  "ban_duration": 3600,
+  "log_sources": [
+    "Security",
+    "System",
+    "Application"
+  ],
+  "monitored_services": [
+    "SSH",
+    "RDP",
+    "FTP",
+    "HTTP",
+    "HTTPS",
+    "SMB"
+  ]
+}
