@@ -1432,13 +1432,14 @@ async def create_hardening_plan(request: HardeningPlanRequest) -> Dict[str, Any]
     plan_path = paths.plans_dir() / "hardening_plan.json"
     plan_path.write_text(json.dumps(plan, indent=2), encoding="utf-8")
 
-    # Commandes PowerShell suggérées (utilisation du plan généré)
-    rel_plan = str(plan_path.relative_to(base_dir.parent))
-    ps_dry_run = f".\\scripts\\powershell\\security_hardening.ps1 -Plan `\"{rel_plan}`\" -DryRun"
-    ps_apply = f".\\scripts\\powershell\\security_hardening.ps1 -Plan `\"{rel_plan}`\""
+    # Commandes PowerShell suggérées — chemins absolus : en mode installé le
+    # plan vit sous %LOCALAPPDATA% et les scripts dans {app}\scripts.
+    script = paths.scripts_dir() / "powershell" / "security_hardening.ps1"
+    ps_dry_run = f'& "{script}" -Plan "{plan_path}" -DryRun'
+    ps_apply = f'& "{script}" -Plan "{plan_path}"'
 
     return {
-        "plan_file": str(plan_path.relative_to(base_dir.parent)),
+        "plan_file": str(plan_path),
         "powershell_dry_run": ps_dry_run,
         "powershell_apply": ps_apply,
         "ports_count": len(ports_payload),
@@ -1503,17 +1504,17 @@ async def generate_audit_hardening_plan() -> Dict[str, Any]:
     plan_path = base_dir / "hardening_plan.json"
     plan_path.write_text(json.dumps(plan, indent=2), encoding="utf-8")
 
-    rel_plan_win = str(plan_path.relative_to(project_root))
-    rel_plan = rel_plan_win.replace("\\", "/")
-
-    ps_dry_run = f".\\scripts\\powershell\\security_hardening.ps1 -Plan `\"{rel_plan_win}`\" -DryRun"
-    ps_apply = f".\\scripts\\powershell\\security_hardening.ps1 -Plan `\"{rel_plan_win}`\""
+    # Chemins absolus : en mode installé le plan vit sous %LOCALAPPDATA% et
+    # les scripts dans {app}\scripts — relative_to() échouerait (ValueError).
+    script = paths.scripts_dir() / "powershell" / "security_hardening.ps1"
+    ps_dry_run = f'& "{script}" -Plan "{plan_path}" -DryRun'
+    ps_apply = f'& "{script}" -Plan "{plan_path}"'
 
     return {
         "success": True,
-        "plan_path": rel_plan,
+        "plan_path": str(plan_path),
         "ports_count": len(ports_payload),
-        "plan_file": rel_plan_win,
+        "plan_file": str(plan_path),
         "powershell_dry_run": ps_dry_run,
         "powershell_apply": ps_apply,
     }

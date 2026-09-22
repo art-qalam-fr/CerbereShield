@@ -10,6 +10,17 @@ import time
 from typing import Dict, List, Any, Set, Tuple, Optional
 import psutil
 
+
+def _hidden_kwargs() -> Dict[str, Any]:
+    """Kwargs subprocess : pas de fenêtre console quand l'app est fenêtrée."""
+    if not hasattr(subprocess, "STARTUPINFO"):
+        return {}
+    si = subprocess.STARTUPINFO()
+    si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+    si.wShowWindow = 0  # SW_HIDE
+    return {"startupinfo": si, "creationflags": getattr(subprocess, "CREATE_NO_WINDOW", 0)}
+
+
 class NetworkCollector:
     """Classe pour collecter les informations réseau locales"""
 
@@ -238,6 +249,7 @@ class NetworkCollector:
                 capture_output=True,
                 text=True,
                 timeout=10,
+                **_hidden_kwargs(),
             )
             if result.returncode == 0:
                 for line in result.stdout.splitlines():

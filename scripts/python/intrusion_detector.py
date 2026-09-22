@@ -234,7 +234,8 @@ class IntrusionDetector:
                 ['powershell', '-Command', ps_command],
                 capture_output=True,
                 text=True,
-                timeout=10  # Timeout réduit
+                timeout=10,  # Timeout réduit
+                **_paths.hidden_subprocess_kwargs(),
             )
             
             if result.returncode == 0:
@@ -364,12 +365,12 @@ class IntrusionDetector:
             
             # Vérifier si la règle existe déjà
             check_cmd = ["netsh", "advfirewall", "firewall", "show", "rule", f"name={rule_name}"]
-            result = subprocess.run(check_cmd, capture_output=True, text=True)
+            result = subprocess.run(check_cmd, capture_output=True, text=True, **_paths.hidden_subprocess_kwargs())
             
             if "No rules match" in result.stdout:
                 # Créer la règle de blocage
                 block_cmd = ["netsh", "advfirewall", "firewall", "add", "rule", f"name={rule_name}", "dir=in", "action=block", f"remoteip={ip}"]
-                subprocess.run(block_cmd, check=True)
+                subprocess.run(block_cmd, check=True, **_paths.hidden_subprocess_kwargs())
                 
                 # Enregistrer le bannissement
                 ban_time = datetime.now()
@@ -434,7 +435,7 @@ class IntrusionDetector:
                 # Supprimer la règle firewall
                 rule_name = f"SecurityShield_Blocked_{ip.replace('.', '_')}"
                 unblock_cmd = ["netsh", "advfirewall", "firewall", "delete", "rule", f"name={rule_name}"]
-                subprocess.run(unblock_cmd, check=True)
+                subprocess.run(unblock_cmd, check=True, **_paths.hidden_subprocess_kwargs())
                 
                 # Marquer comme inactive en base
                 conn = sqlite3.connect(self.db_path)
@@ -549,7 +550,7 @@ class IntrusionDetector:
         if ip in self.banned_ips:
             try:
                 rule_name = f"SecurityShield_Blocked_{ip.replace('.', '_')}"
-                subprocess.run(["netsh", "advfirewall", "firewall", "delete", "rule", f"name={rule_name}"], check=True)
+                subprocess.run(["netsh", "advfirewall", "firewall", "delete", "rule", f"name={rule_name}"], check=True, **_paths.hidden_subprocess_kwargs())
                 
                 conn = sqlite3.connect(self.db_path)
                 cursor = conn.cursor()

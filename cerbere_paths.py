@@ -10,8 +10,10 @@ Mode frozen (exe packagé) :
 
 import os
 import shutil
+import subprocess
 import sys
 from pathlib import Path
+from typing import Any, Dict
 
 APP_DIR_NAME = "CerbereShield"
 
@@ -93,6 +95,33 @@ def config_file(name: str = "config.yml", package: str = "web_port_dashboard") -
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(bundled, target)
     return target
+
+
+def scripts_dir() -> Path:
+    """Dossier des scripts (powershell de durcissement, utilitaires).
+
+    Frozen : ``{app}\\scripts`` installés à côté de l'exe (secours : le
+    bundle ``_MEIPASS``). Source : ``<dépôt>\\scripts``.
+    """
+    if is_frozen():
+        installed = Path(sys.executable).resolve().parent / "scripts"
+        if installed.is_dir():
+            return installed
+    return project_root() / "scripts"
+
+
+def hidden_subprocess_kwargs() -> Dict[str, Any]:
+    """Kwargs pour ``subprocess.*`` afin de ne pas ouvrir de fenêtre console
+    lorsque l'application tourne sans console (build fenêtré PyInstaller)."""
+    if os.name != "nt":
+        return {}
+    startupinfo = subprocess.STARTUPINFO()
+    startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+    startupinfo.wShowWindow = 0  # SW_HIDE
+    return {
+        "startupinfo": startupinfo,
+        "creationflags": getattr(subprocess, "CREATE_NO_WINDOW", 0),
+    }
 
 
 def bundled_file(*relative_parts: str) -> Path:
