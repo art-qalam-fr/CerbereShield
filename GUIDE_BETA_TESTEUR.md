@@ -32,6 +32,19 @@ fichier est bien signé par le projet.
 
 ## 3. Installer et lancer
 
+> ⚠️ **Si tu as déjà installé une version beta précédente** (ex. celle qui
+> demandait le mot de passe Windows) : la réinstallation seule **ne suffit
+> pas** — l'ancienne configuration survit. Avant de réinstaller :
+>
+> 1. Désinstalle CerbereShield (Paramètres Windows → Applications →
+>    CerbereShield → Désinstaller)
+> 2. Supprime le dossier de données : colle `%LOCALAPPDATA%\CerbereShield`
+>    dans la barre d'adresse de l'explorateur et supprime le dossier entier
+>    (ça efface l'ancienne config qui demandait le mot de passe Windows)
+> 3. Puis installe la nouvelle version normalement
+>
+> *Première installation ? Ignore ce bloc, tu peux continuer direct.*
+
 1. Lance `CerbereShield_Setup.exe` → l'installation se fait normalement
 2. À la fin, Cerbere se lance ; le tableau de bord s'ouvre dans le navigateur
    sur **http://localhost:4050**
