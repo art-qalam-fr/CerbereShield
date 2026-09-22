@@ -117,11 +117,18 @@ jobs:
           name: signed-package
           path: signed
 
-      - name: Release GitHub (optionnel)
+      - name: Release GitHub en draft (optionnel)
         if: inputs.publish_release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ inputs.release_tag }}
           name: Cerbere Shield ${{ inputs.release_tag }} (signe)
           prerelease: ${{ startsWith(inputs.release_tag, 'v1.') == false }}
+          draft: true   # releases immuables : assets acceptes seulement en draft
           files: signed/**/*.exe
+
+      - name: Publication de la release
+        if: inputs.publish_release
+        run: gh release edit "${{ inputs.release_tag }}" --draft=false
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
