@@ -28,7 +28,7 @@ if errorlevel 1 (
     echo      [INFO] dotnet introuvable — le systray ne sera pas inclus.
 ) else (
     pushd systray_client
-    dotnet publish -c Release -r win-x64 --self-contained -o bin\Release\net6.0-windows\win-x64\publish
+    dotnet publish -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -o bin\Release\net6.0-windows\win-x64\publish
     if errorlevel 1 ( popd & exit /b 1 )
     popd
 )

@@ -46,6 +46,25 @@ fichier est bien signé par le projet.
 
 ## 3. Installer et lancer
 
+> 🆘 **Windows refuse complètement l'installation ?** (Smart App Control ou
+> autre blocage qui persiste même après « Exécuter quand même »)
+>
+> **Plan B — version portable, aucune installation requise :**
+>
+> 1. Dans la release, télécharge **`CerbereShield_portable.zip`**
+> 2. Extrais le zip où tu veux (ex. `Documents\CerbereShield`)
+> 3. Pour chaque `.exe` du dossier : clic droit → **Propriétés** → coche
+>    **« Débloquer »** en bas → OK (ça enlève le marquage « venu
+>    d'internet » qui déclenche les blocages)
+> 4. Lance `CerbereShield.exe` → le dashboard s'ouvre, le systray démarre
+>    tout seul
+>
+> Si Windows bloque quand même à l'exécution (pas de bouton de
+> contournement), c'est **Smart App Control** : Sécurité Windows →
+> **Contrôle des applications et du navigateur** → **Paramètres Smart App
+> Control** → **Désactivé** *(irréversible sans réinstaller Windows — à
+> toi de voir)*. Ensuite la procédure ci-dessus fonctionne.
+
 > ⚠️ **Si tu as déjà installé une version beta précédente** (ex. celle qui
 > demandait le mot de passe Windows) : la réinstallation seule **ne suffit
 > pas** — l'ancienne configuration survit. Avant de réinstaller :

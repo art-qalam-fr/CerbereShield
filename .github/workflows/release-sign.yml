@@ -118,10 +118,24 @@ jobs:
           }
           if ($bad) { throw "Signature manquante ou invalide : $($bad -join ', ')" }
 
+      - name: Zip portable (sans installation)
+        run: |
+          $dst = "portable\CerbereShield"
+          New-Item -ItemType Directory -Path $dst -Force | Out-Null
+          Copy-Item "dist\CerbereShield\*" $dst -Recurse -Force
+          # L'exe signe remplace le binaire non signe du dossier
+          Copy-Item "signed\CerbereShield.exe" "$dst\CerbereShield.exe" -Force
+          Copy-Item "scripts" "$dst\scripts" -Recurse -Force
+          $sys = "systray_client\bin\Release\net6.0-windows\win-x64\publish\WebPortSystray.exe"
+          if (Test-Path $sys) { Copy-Item $sys $dst -Force }
+          Compress-Archive -Path "portable\CerbereShield" -DestinationPath "CerbereShield_portable.zip" -Force
+
       - uses: actions/upload-artifact@v4
         with:
           name: signed-package
-          path: signed
+          path: |
+            signed
+            CerbereShield_portable.zip
 
       - name: Release GitHub en draft (optionnel)
         if: inputs.publish_release
@@ -131,7 +145,9 @@ jobs:
           name: Cerbere Shield ${{ inputs.release_tag }} (signe)
           prerelease: ${{ startsWith(inputs.release_tag, 'v1.') == false }}
           draft: true   # releases immuables : assets acceptes seulement en draft
-          files: signed/**/*.exe
+          files: |
+            signed/**/*.exe
+            CerbereShield_portable.zip
 
       - name: Publication de la release
         if: inputs.publish_release
