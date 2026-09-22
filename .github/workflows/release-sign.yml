@@ -29,7 +29,7 @@ on:
       release_tag:
         description: "Tag de la release (si publication)"
         required: false
-        default: "v0.9.0-beta"
+        default: "v0.9.3-beta"   # les tags de releases immuables ne sont pas reutilisables
 
 permissions:
   contents: write   # upload-artifact + release
@@ -107,10 +107,16 @@ jobs:
 
       - name: Verification des signatures (Authenticode)
         run: |
+          $bad = @()
           Get-ChildItem signed -Recurse -Include *.exe,*.dll | ForEach-Object {
             $sig = Get-AuthenticodeSignature $_.FullName
-            "{0} -> {1} ({2})" -f $_.Name, $sig.Status, $sig.SignerCertificate.Subject
+            $subj = if ($sig.SignerCertificate) { $sig.SignerCertificate.Subject } else { "(aucun certificat)" }
+            "{0} -> {1} ({2})" -f $_.Name, $sig.Status, $subj
+            # UnknownError = racine de confiance absente du runner CI : OK si
+            # le certificat est bien attache. Echec seulement si non signe/corrompu.
+            if (-not $sig.SignerCertificate -or $sig.Status -in @('NotSigned','HashMismatch','Incompatible')) { $bad += $_.Name }
           }
+          if ($bad) { throw "Signature manquante ou invalide : $($bad -join ', ')" }
 
       - uses: actions/upload-artifact@v4
         with:

@@ -30,6 +30,13 @@ l'artefact `signed-package` → les exe signés sont dedans.
 Pour publier : relancer avec `publish_release` coché → crée une GitHub
 Release avec les exe signés en pièces jointes.
 
+> ⚠️ **Releases immuables** (activées sur le repo) : une release publiée
+> `burn` son tag **définitivement** — même si on la supprime, le tag ne peut
+> plus être réutilisé. Le workflow crée donc la release en **draft**, uploade
+> les assets, puis publie (`gh release edit --draft=false`). Si la
+> publication échoue, incrémenter le tag (`v0.9.2-beta`, `v0.9.3-beta`…)
+> plutôt que de réessayer le même.
+
 ---
 
 ## Procédure complète (pour refaire de zéro)

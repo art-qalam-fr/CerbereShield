@@ -7,7 +7,7 @@ Durée totale : ~5 minutes.
 
 👉 **https://github.com/art-qalam-fr/CerbereShield/releases**
 
-Sur cette page, dans la release `v0.9.0-beta`, télécharge le fichier
+Sur cette page, dans la release la plus récente, télécharge le fichier
 **`CerbereShield_Setup.exe`** (section « Assets »).
 
 > Pas besoin de compte GitHub — le lien fonctionne pour tout le monde.
