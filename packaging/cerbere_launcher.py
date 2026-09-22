@@ -6,9 +6,34 @@ stdout/stderr sont redirigés vers ``logs/launcher.log`` car il n'y a
 pas de console attachée.
 """
 
+import subprocess
 import sys
 import threading
 import webbrowser
+from pathlib import Path
+
+
+def _start_systray() -> None:
+    """Lance WebPortSystray.exe s'il est installé à côté de l'exécutable.
+
+    En mode frozen l'exe vit dans ``%LOCALAPPDATA%\\Programs\\CerbereShield``
+    avec le systray à côté — équivalent du lancement fait par les .bat en dev.
+    Sans doublon : on ne relance pas si le systray tourne déjà.
+    """
+    try:
+        import psutil
+
+        for proc in psutil.process_iter(["name"]):
+            if (proc.info["name"] or "").lower() == "webportsystray.exe":
+                return
+    except Exception:
+        pass
+    systray = Path(sys.executable).resolve().parent / "WebPortSystray.exe"
+    if systray.exists():
+        subprocess.Popen(
+            [str(systray)],
+            creationflags=getattr(subprocess, "DETACHED_PROCESS", 0),
+        )
 
 
 def main() -> None:
@@ -40,6 +65,9 @@ def main() -> None:
     dashboard._uvicorn_server = server
 
     threading.Timer(1.5, lambda: webbrowser.open("http://localhost:4050/")).start()
+
+    if paths.is_frozen():
+        _start_systray()
 
     try:
         server.run()

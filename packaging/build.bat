@@ -22,7 +22,18 @@ if errorlevel 1 (
 echo [2/3] Build PyInstaller (dist\CerbereShield)...
 "%PY%" -m PyInstaller --noconfirm --clean packaging\cerbere.spec || exit /b 1
 
-echo [3/3] Installeur Inno Setup...
+echo [3/4] Systray .NET (WebPortSystray.exe)...
+where dotnet >nul 2>&1
+if errorlevel 1 (
+    echo      [INFO] dotnet introuvable — le systray ne sera pas inclus.
+) else (
+    pushd systray_client
+    dotnet publish -c Release -r win-x64 --self-contained -o bin\Release\net6.0-windows\win-x64\publish
+    if errorlevel 1 ( popd & exit /b 1 )
+    popd
+)
+
+echo [4/4] Installeur Inno Setup...
 where iscc >nul 2>&1
 if errorlevel 1 (
     echo      [INFO] iscc introuvable — installeur non genere.
