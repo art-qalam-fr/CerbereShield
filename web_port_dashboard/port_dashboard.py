@@ -573,7 +573,31 @@ async def unlock(req: UnlockRequest, response: Response) -> Dict[str, Any]:
 
     acc = _access_cfg()
     method = acc.get("method", "windows")
-    ok = _verify_app_password(req.password) if method == "app" else _verify_windows_password(req.password)
+
+    # Premier lancement en méthode « app » : aucun hash configuré → le premier
+    # mot de passe soumis devient le mot de passe dédié (postes sans mot de
+    # passe Windows, ex. Windows Hello).
+    first_run = method == "app" and not acc.get("app_password_hash")
+    if first_run:
+        new_pwd = (req.password or "").strip()
+        if len(new_pwd) < 4:
+            raise HTTPException(
+                status_code=400,
+                detail="Choisissez un mot de passe d'au moins 4 caractères.",
+            )
+        salt = secrets.token_hex(16)
+        acc["app_password_salt"] = salt
+        acc["app_password_hash"] = _hash_app_password(new_pwd, salt)
+        cfg = _runtime_cfg()
+        cfg["access"] = acc
+        _save_config(cfg)
+        logger.info("Mot de passe dédié initialisé au premier lancement")
+
+    ok = first_run or (
+        _verify_app_password(req.password)
+        if method == "app"
+        else _verify_windows_password(req.password)
+    )
     if not ok:
         _unlock_failures["count"] += 1
         if _unlock_failures["count"] >= 5:
@@ -610,10 +634,13 @@ async def lock(request: Request) -> Dict[str, Any]:
 async def auth_status(request: Request) -> Dict[str, Any]:
     """Indique si l'application est déverrouillée et la méthode d'accès."""
     enabled = _access_enabled()
+    acc = _access_cfg()
     return {
         "enabled": enabled,
         "unlocked": (not enabled) or _is_unlocked(request),
-        "method": _access_cfg().get("method", "windows"),
+        "method": acc.get("method", "windows"),
+        "needs_setup": acc.get("method", "windows") == "app"
+        and not acc.get("app_password_hash"),
     }
 
 

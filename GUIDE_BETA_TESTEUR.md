@@ -35,7 +35,11 @@ fichier est bien signé par le projet.
 1. Lance `CerbereShield_Setup.exe` → l'installation se fait normalement
 2. À la fin, Cerbere se lance ; le tableau de bord s'ouvre dans le navigateur
    sur **http://localhost:4050**
-3. Certaines fonctions (pare-feu, durcissement) demanderont les droits
+3. **Premier lancement** : l'écran te demande de **créer un mot de passe
+   dédié à l'application** (min. 4 caractères). C'est lui qui déverrouillera
+   l'app ensuite — retiens-le (aucun lien avec ton mot de passe Windows,
+   compatible Windows Hello).
+4. Certaines fonctions (pare-feu, durcissement) demanderont les droits
    administrateur — accepte l'élévation UAC quand elle apparaît
 
 ## 4. Quoi tester

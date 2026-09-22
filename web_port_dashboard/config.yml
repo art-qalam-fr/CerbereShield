@@ -21,5 +21,9 @@ smtp_port: 465
 external_min_severity: 90
 access:
   enabled: true
-  method: windows
+  # « app » = mot de passe dédié à l'application (fonctionne aussi sur les
+  # comptes Windows Hello sans mot de passe). Au premier lancement, l'écran
+  # de déverrouillage propose de le créer. « windows » = mot de passe de la
+  # session Windows (ne fonctionne que si le compte a un mot de passe).
+  method: app
 ui_language: fr
