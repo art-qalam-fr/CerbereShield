@@ -77,3 +77,9 @@ image.png
 # Artefacts de build PyInstaller / Inno Setup
 build/
 dist/
+
+# Memory-bank des IDE agents (Roo, KiloCode, Cline)
+.roo/
+.kilo/
+.kilocode/
+.clinerules/
