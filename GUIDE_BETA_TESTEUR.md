@@ -26,6 +26,20 @@ Pour continuer :
 C'est un faux positif lié à l'absence de réputation du certificat — le
 fichier est bien signé par le projet.
 
+> 🛑 **Blocage total sans bouton « Exécuter quand même » ?** Sur Windows 11,
+> **Smart App Control** peut bloquer complètement l'installation (message du
+> type « application bloquée / suspecte » sans option de contournement).
+> Pour l'autoriser :
+>
+> 1. Menu Démarrer → **Sécurité Windows**
+> 2. **Contrôle des applications et du navigateur**
+> 3. **Paramètres de Smart App Control** → **Désactivé**
+> 4. Relance le setup → l'écran bleu « Exécuter quand même » apparaît
+>
+> *Attention : Smart App Control ne se réactive pas sans réinitialiser
+> Windows. Ce blocage disparaîtra avec le certificat officiel (en cours
+> d'obtention auprès de la SignPath Foundation).*
+
 > Optionnel : si tu veux voir la signature « valide », installe le certificat
 > de test `Cerbere_Test_Cert.cer` (fourni séparément) dans
 > *Utilisateur actuel → Autorités de certification racines de confiance*.

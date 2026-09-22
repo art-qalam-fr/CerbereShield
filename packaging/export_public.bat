@@ -23,7 +23,7 @@ echo.
 
 REM --- Copie miroir avec exclusions (noms simples = exclus a tout niveau) ---
 robocopy "%SRC%" "%DST%" /MIR /NFL /NDL /NJH /NP /R:1 /W:1 ^
-  /XD .git .venv .agent .kilo .vscode .pytest_cache .benchmarks ^
+  /XD .git .venv .agent .kilo .kilocode .roo .clinerules .vscode .pytest_cache .benchmarks ^
       .claude .devin .codeium backup build dist logs logo ^
       memory-database publish_staging semantic-cache-data tasks ^
       "PRD*" __pycache__ state node_modules bin obj publish ^
