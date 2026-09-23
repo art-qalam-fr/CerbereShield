@@ -2,7 +2,7 @@
 ; Build : iscc packaging\installer.iss   (après build.bat / PyInstaller)
 
 #define AppName "Cerbere Security Shield"
-#define AppVersion "0.9.7"
+#define AppVersion "0.9.8"
 #define AppPublisher "ArchNext"
 #define ExeName "CerbereShield.exe"
 
