@@ -29,7 +29,7 @@ on:
       release_tag:
         description: "Tag de la release (si publication)"
         required: false
-        default: "v0.9.6-beta"   # les tags de releases immuables ne sont pas reutilisables
+        default: "v0.9.7-beta"   # les tags de releases immuables ne sont pas reutilisables
 
 permissions:
   contents: write   # upload-artifact + release

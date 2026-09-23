@@ -2,7 +2,7 @@
 ; Build : iscc packaging\installer.iss   (après build.bat / PyInstaller)
 
 #define AppName "Cerbere Security Shield"
-#define AppVersion "1.0.0"
+#define AppVersion "0.9.7"
 #define AppPublisher "ArchNext"
 #define ExeName "CerbereShield.exe"
 
@@ -50,7 +50,7 @@ Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#ExeName}"; Tasks: desktopic
 ; dans le dossier Démarrage serait silencieusement ignoré par Windows.
 ; On utilise donc une tâche planifiée "au logon, privilèges maximaux".
 Filename: "schtasks"; Parameters: "/create /tn ""CerbereShield"" /tr ""{app}\{#ExeName}"" /sc onlogon /rl highest /f"; Flags: runhidden; Tasks: startupicon
-Filename: "{app}\{#ExeName}"; Description: "Lancer {#AppName}"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\{#ExeName}"; Verb: "runas"; Description: "Lancer {#AppName}"; Flags: postinstall shellexec skipifsilent
 
 [UninstallRun]
 Filename: "schtasks"; Parameters: "/delete /tn ""CerbereShield"" /f"; Flags: runhidden; RunOnceId: "DelCerbereTask"
