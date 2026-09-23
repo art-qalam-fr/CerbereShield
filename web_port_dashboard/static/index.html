@@ -3277,6 +3277,9 @@ async function refreshFilter() {
                 if (status.running) {
                     statusText.innerText = t('filter.status.running');
                     statusText.style.color = "#bbf7d0";
+                } else if (status.error) {
+                    statusText.innerText = "Erreur : " + status.error;
+                    statusText.style.color = "#fca5a5";
                 } else if (status.enabled) {
                     statusText.innerText = t('filter.status.pending');
                     statusText.style.color = "#fef08a";

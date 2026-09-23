@@ -64,6 +64,7 @@ class DnsSinkhole:
         self._started_at: float = 0.0
 
         self.running: bool = False
+        self.initialization_error: Optional[str] = None
         self.stats = {
             "blocked_total": 0,
             "blocked_domains": Counter(),
@@ -113,6 +114,7 @@ class DnsSinkhole:
         with self._lock:
             if self.running:
                 return
+            self.initialization_error = None
             self.running = True
             self._started_at = time.monotonic()
             self._thread = threading.Thread(
@@ -167,6 +169,7 @@ class DnsSinkhole:
                         except Exception:
                             pass
         except Exception as init_err:
+            self.initialization_error = str(init_err)
             logger.error("Impossible d'initialiser WinDivert (privilèges requis ?): %s", init_err)
         finally:
             self.running = False

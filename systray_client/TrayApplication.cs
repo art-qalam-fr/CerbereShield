@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.Net.Http;
+using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -24,6 +25,17 @@ public class TrayApplication : ApplicationContext
     private readonly Icon _iconOnlineDisabled;
     private readonly Icon _iconOffline;
 
+    // Éléments de menu mis à jour selon l'état courant
+    private readonly ToolStripMenuItem _statusItem;
+    private readonly ToolStripMenuItem _enableItem;
+    private readonly ToolStripMenuItem _disableItem;
+
+    // AUMID explicite : permet à Windows 10/11 d'attribuer les notifications
+    // toast à l'application (sinon elles peuvent être avalées/masquées).
+    [DllImport("shell32.dll", SetLastError = true)]
+    private static extern void SetCurrentProcessExplicitAppUserModelID(
+        [MarshalAs(UnmanagedType.LPWStr)] string appID);
+
     private const string ApiStateUrl = "http://localhost:4050/api/protection/state";
     private const string ApiAlertsUrl = "http://localhost:4050/api/alerts";
     private const string ApiFilterStatusUrl = "http://localhost:4050/api/filter/status";
@@ -33,6 +45,8 @@ public class TrayApplication : ApplicationContext
 
     public TrayApplication()
     {
+        try { SetCurrentProcessExplicitAppUserModelID("Cerbere.SecurityShield"); } catch { }
+
         _httpClient = new HttpClient
         {
             Timeout = TimeSpan.FromSeconds(3)
@@ -54,25 +68,33 @@ public class TrayApplication : ApplicationContext
             appIcon = SystemIcons.Shield;
         }
 
-        _iconOnlineEnabled = appIcon;
-        _iconOnlineDisabled = appIcon;
-        _iconOffline = appIcon;
+        // Badge coloré en bas à droite : vert = protégé, rouge = arrêté, gris = hors-ligne
+        _iconOnlineEnabled = CreateBadgeIcon(appIcon, Color.FromArgb(34, 197, 94));
+        _iconOnlineDisabled = CreateBadgeIcon(appIcon, Color.FromArgb(239, 68, 68));
+        _iconOffline = CreateBadgeIcon(appIcon, Color.FromArgb(107, 114, 128));
 
         _notifyIcon = new NotifyIcon
         {
             Icon = _iconOffline,
             Visible = true,
-            Text = "Web Port Protection - état inconnu"
+            Text = "Cerbere Security Shield - état inconnu"
         };
 
         var menu = new ContextMenuStrip();
+        _statusItem = new ToolStripMenuItem("⚫ Cerbere : état inconnu")
+        {
+            Enabled = false,
+            Font = new Font(menu.Font, FontStyle.Bold)
+        };
+        menu.Items.Add(_statusItem);
+        menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add("Ouvrir le Cerbere Security Shield", null, (_, _) => OpenDashboard());
-        menu.Items.Add("Activer la protection", null, async (_, _) => await SetProtectionAsync(true));
-        menu.Items.Add("Désactiver la protection", null, async (_, _) => await SetProtectionAsync(false));
+        _enableItem = (ToolStripMenuItem)menu.Items.Add("🟢 Activer la protection", null, async (_, _) => await SetProtectionAsync(true));
+        _disableItem = (ToolStripMenuItem)menu.Items.Add("🔴 Désactiver la protection", null, async (_, _) => await SetProtectionAsync(false));
         menu.Items.Add("Filtrage trackers : on/off", null, async (_, _) => await ToggleTrackerFilterAsync());
         menu.Items.Add(new ToolStripSeparator());
-        menu.Items.Add("Appliquer plan durcissement", null, (_, _) => RunScript("appliquer_plan_durcissement_ports.bat"));
-        menu.Items.Add("Appliquer plan libération", null, (_, _) => RunScript("appliquer_plan_liberation_ports.bat"));
+        menu.Items.Add("Appliquer plan durcissement", null, (_, _) => RunHardeningScript("harden"));
+        menu.Items.Add("Appliquer plan libération", null, (_, _) => RunHardeningScript("release"));
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add("Quitter l'application", null, (_, _) => ExitApplication());
 
@@ -95,6 +117,27 @@ public class TrayApplication : ApplicationContext
         // Premier rafraîchissement immédiat
         _ = RefreshStateAsync();
         _ = CheckAlertsAsync();
+    }
+
+    /// <summary>Dessine l'icône de l'app avec un point coloré en bas à droite
+    /// (vert = protection active, rouge = inactive, gris = backend injoignable).</summary>
+    private static Icon CreateBadgeIcon(Icon baseIcon, Color badgeColor)
+    {
+        var bmp = new Bitmap(32, 32);
+        using (var g = Graphics.FromImage(bmp))
+        {
+            g.Clear(Color.Transparent);
+            g.DrawIcon(baseIcon, new Rectangle(0, 0, 32, 32));
+            using (var brush = new SolidBrush(badgeColor))
+                g.FillEllipse(brush, 18, 18, 13, 13);
+            using (var pen = new Pen(Color.White, 1.6f))
+                g.DrawEllipse(pen, 18, 18, 13, 13);
+        }
+        // GetHicon alloue un handle non libéré — acceptable pour 3 icônes
+        // persistantes vivant aussi longtemps que le processus.
+        IntPtr h = bmp.GetHicon();
+        bmp.Dispose();
+        return Icon.FromHandle(h);
     }
 
     private void OpenDashboard()
@@ -193,18 +236,27 @@ public class TrayApplication : ApplicationContext
             if (enabled)
             {
                 _notifyIcon.Icon = _iconOnlineEnabled;
-                _notifyIcon.Text = "Web Port Protection - ACTIVÉE";
+                _notifyIcon.Text = "Cerbere Security Shield - protection ACTIVÉE";
+                _statusItem.Text = "🟢 Protection activée — vous êtes protégé";
+                _enableItem.Enabled = false;
+                _disableItem.Enabled = true;
             }
             else
             {
                 _notifyIcon.Icon = _iconOnlineDisabled;
-                _notifyIcon.Text = "Web Port Protection - DÉSACTIVÉE";
+                _notifyIcon.Text = "Cerbere Security Shield - protection DÉSACTIVÉE";
+                _statusItem.Text = "🔴 Protection désactivée — vous n'êtes pas protégé";
+                _enableItem.Enabled = true;
+                _disableItem.Enabled = false;
             }
         }
         catch
         {
             _notifyIcon.Icon = _iconOffline;
-            _notifyIcon.Text = "Web Port Protection - serveur indisponible";
+            _notifyIcon.Text = "Cerbere Security Shield - serveur indisponible";
+            _statusItem.Text = "⚫ Cerbere : serveur indisponible";
+            _enableItem.Enabled = false;
+            _disableItem.Enabled = false;
         }
     }
 
@@ -398,11 +450,14 @@ public class TrayApplication : ApplicationContext
         Application.Exit();
     }
 
-    private void RunScript(string scriptName)
+    /// <summary>Applique un plan de durcissement/libération en lançant
+    /// security_hardening.ps1 directement dans une console PowerShell cachée
+    /// (élevée via UAC si nécessaire) — aucune fenêtre n'apparaît.</summary>
+    private void RunHardeningScript(string action)
     {
         try
         {
-            string scriptPath = GetFullPath(scriptName);
+            string scriptPath = GetFullPath(System.IO.Path.Combine("powershell", "security_hardening.ps1"));
             if (!System.IO.File.Exists(scriptPath))
             {
                 throw new Exception($"Fichier introuvable : {scriptPath}");
@@ -412,70 +467,85 @@ public class TrayApplication : ApplicationContext
                 System.Security.Principal.WindowsIdentity.GetCurrent())
                 .IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator);
 
+            var psi = new ProcessStartInfo
+            {
+                FileName = "powershell.exe",
+                Arguments = $"-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File \"{scriptPath}\" -Action \"{action}\"",
+            };
             if (isElevated)
             {
-                var psi = new ProcessStartInfo
-                {
-                    FileName = "cmd.exe",
-                    Arguments = "/c \"" + scriptPath + "\" -hidden -q",
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                };
-
-                Process? p = Process.Start(psi);
-                if (p != null)
-                {
-                    p.EnableRaisingEvents = true;
-                    p.Exited += (s, e) =>
-                    {
-                        _notifyIcon.BalloonTipTitle = "Security Sheeld";
-                        _notifyIcon.BalloonTipText = (p.ExitCode == 0)
-                            ? (scriptName.Contains("liberation") ? "Liberation des ports effectuee." : "Plan de durcissement applique.")
-                            : ("Echec du script (code " + p.ExitCode + ")");
-                        _notifyIcon.ShowBalloonTip(5000);
-                    };
-                }
+                psi.UseShellExecute = false;
+                psi.CreateNoWindow = true;
             }
             else
             {
-                // Lancer le .bat en tant qu'administrateur (UAC)
-                // Le .bat se chargera de se cacher.
-                var psi = new ProcessStartInfo
+                // UAC requis : on élève powershell lui-même en mode caché —
+                // tous les sous-processus héritent de la console invisible.
+                psi.UseShellExecute = true;
+                psi.Verb = "runas";
+                psi.WindowStyle = ProcessWindowStyle.Hidden;
+            }
+
+            Process? p = Process.Start(psi);
+            if (p != null)
+            {
+                p.EnableRaisingEvents = true;
+                p.Exited += (s, e) =>
                 {
-                    FileName = scriptPath,
-                    UseShellExecute = true,
-                    Verb = "runas"
+                    _notifyIcon.BalloonTipTitle = "Cerbere Security Shield";
+                    _notifyIcon.BalloonTipText = (p.ExitCode == 0)
+                        ? (action == "release" ? "Libération des ports effectuée." : "Plan de durcissement appliqué.")
+                        : ("Échec du script (code " + p.ExitCode + ")");
+                    _notifyIcon.ShowBalloonTip(5000);
                 };
-                Process.Start(psi);
             }
         }
         catch (Exception ex)
         {
-            _notifyIcon.BalloonTipTitle = "Web Port Protection";
+            _notifyIcon.BalloonTipTitle = "Cerbere Security Shield";
             _notifyIcon.BalloonTipText = "Erreur script : " + ex.Message;
             _notifyIcon.ShowBalloonTip(3000);
         }
     }
 
-    private string GetFullPath(string scriptName)
+    private string GetFullPath(string relativeScriptPath)
     {
         string currentDir = AppDomain.CurrentDomain.BaseDirectory;
-        // Retourner à la racine du projet depuis systray_client/bin/Release/net6.0-windows/win-x64/publish/
-        string rootDir = System.IO.Path.GetFullPath(System.IO.Path.Combine(currentDir, "..", "..", "..", "..", "..", ".."));
 
-        // Les scripts utilitaires vivent dans le dossier scripts/ à la racine du projet
-        string scriptPath = System.IO.Path.Combine(rootDir, "scripts", scriptName);
+        // Mode installé : {app}\scripts\... à côté de WebPortSystray.exe
+        string scriptPath = System.IO.Path.Combine(currentDir, "scripts", relativeScriptPath);
+        if (System.IO.File.Exists(scriptPath))
+        {
+            return scriptPath;
+        }
+
+        // Mode dev : remonter à la racine du projet selon le layout de build
+        // (4 niveaux depuis bin/Debug|Release/net6.0-windows, 6 depuis .../win-x64/publish)
+        foreach (var rootDir in new[]
+        {
+            System.IO.Path.GetFullPath(System.IO.Path.Combine(currentDir, "..", "..", "..", "..")),
+            System.IO.Path.GetFullPath(System.IO.Path.Combine(currentDir, "..", "..", "..", "..", "..", "..")),
+        })
+        {
+            string candidate = System.IO.Path.Combine(rootDir, "scripts", relativeScriptPath);
+            if (System.IO.File.Exists(candidate))
+            {
+                return candidate;
+            }
+            scriptPath = candidate;
+        }
 
         if (!System.IO.File.Exists(scriptPath))
         {
             // Compatibilité : ancien emplacement à la racine du projet
-            scriptPath = System.IO.Path.Combine(rootDir, scriptName);
+            scriptPath = System.IO.Path.GetFullPath(System.IO.Path.Combine(
+                System.IO.Path.GetDirectoryName(scriptPath)!, "..", relativeScriptPath));
         }
 
         if (!System.IO.File.Exists(scriptPath))
         {
             // Fallback si on est lancé autrement
-            scriptPath = System.IO.Path.Combine(System.IO.Directory.GetCurrentDirectory(), "scripts", scriptName);
+            scriptPath = System.IO.Path.Combine(System.IO.Directory.GetCurrentDirectory(), "scripts", relativeScriptPath);
         }
 
         return scriptPath;

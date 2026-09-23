@@ -507,6 +507,54 @@ def test_intrusion_detector_alert_callback(tmp_path):
 
 # ---------- T31 : Filtrage DNS & Trackers ----------
 
+def test_audit_plan_uses_live_snapshot_without_audit_file(tmp_path, monkeypatch):
+    """Le plan d'audit fonctionne en mode installé sans audit_data.json."""
+    from port_dashboard import generate_audit_hardening_plan
+
+    plans_dir = tmp_path / "plans"
+    plans_dir.mkdir()
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(port_dashboard.paths, "writable_root", lambda: tmp_path)
+    monkeypatch.setattr(port_dashboard.paths, "plans_dir", lambda: plans_dir)
+    monkeypatch.setattr(
+        port_dashboard.paths,
+        "scripts_dir",
+        lambda: PROJECT_ROOT / "scripts",
+    )
+    monkeypatch.setattr(
+        port_dashboard,
+        "_snapshot",
+        {
+            "ports": [
+                {"port": 8080, "protocol": "tcp", "local_ip": "0.0.0.0", "firewall_blocked": False},
+                {"port": 443, "protocol": "tcp", "local_ip": "0.0.0.0", "firewall_blocked": True},
+            ]
+        },
+    )
+
+    result = asyncio.run(generate_audit_hardening_plan())
+    plan = json.loads((plans_dir / "hardening_plan.json").read_text(encoding="utf-8"))
+    assert result["success"] is True
+    assert plan["ports"] == [{"port": 8080, "protocol": "tcp", "risk": "unexpected"}]
+
+
+def test_filter_status_reports_windivert_initialization_error(monkeypatch):
+    """Le statut ne doit pas déclarer le filtre actif après un échec WinDivert."""
+    class FailedSinkhole:
+        running = False
+        domaines = {"example.test"}
+        whitelist = set()
+        initialization_error = "[WinError 5] Accès refusé"
+        stats = {"queries_total": 0, "blocked_total": 0}
+
+    monkeypatch.setattr(port_dashboard, "_sinkhole", FailedSinkhole())
+    monkeypatch.setattr(port_dashboard, "_load_filter_state", lambda: {"enabled": True})
+    result = asyncio.run(port_dashboard.get_filter_status())
+    assert result["enabled"] is False
+    assert result["running"] is False
+    assert "WinError 5" in result["error"]
+
+
 def test_filter_endpoints_isolated(tmp_path, monkeypatch):
     """Vérifie le cycle complet des endpoints de filtrage trackers (T31)."""
     from collections import Counter

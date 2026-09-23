@@ -41,10 +41,16 @@ Source: "..\systray_client\bin\Release\net6.0-windows\win-x64\publish\WebPortSys
 Source: "..\scripts\*"; DestDir: "{app}\scripts"; Excludes: "__pycache__"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
 
 [Icons]
-Name: "{group}\{#AppName}"; Filename: "{app}\{#ExeName}"
-Name: "{group}\Systray Cerbere"; Filename: "{app}\WebPortSystray.exe"; Check: FileExists(ExpandConstant('{app}\WebPortSystray.exe'))
+Name: "{group}\{#AppName}"; Filename: "{app}\{#ExeName}"; AppUserModelID: "Cerbere.SecurityShield"
+Name: "{group}\Systray Cerbere"; Filename: "{app}\WebPortSystray.exe"; AppUserModelID: "Cerbere.SecurityShield"; Check: FileExists(ExpandConstant('{app}\WebPortSystray.exe'))
 Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#ExeName}"; Tasks: desktopicon
-Name: "{userstartup}\{#AppName}"; Filename: "{app}\{#ExeName}"; Tasks: startupicon
 
 [Run]
+; CerbereShield.exe demande l'élévation (requireAdministrator) : un raccourci
+; dans le dossier Démarrage serait silencieusement ignoré par Windows.
+; On utilise donc une tâche planifiée "au logon, privilèges maximaux".
+Filename: "schtasks"; Parameters: "/create /tn ""CerbereShield"" /tr ""{app}\{#ExeName}"" /sc onlogon /rl highest /f"; Flags: runhidden; Tasks: startupicon
 Filename: "{app}\{#ExeName}"; Description: "Lancer {#AppName}"; Flags: nowait postinstall skipifsilent
+
+[UninstallRun]
+Filename: "schtasks"; Parameters: "/delete /tn ""CerbereShield"" /f"; Flags: runhidden; RunOnceId: "DelCerbereTask"

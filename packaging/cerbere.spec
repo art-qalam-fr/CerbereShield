@@ -75,6 +75,10 @@ exe = EXE(
     upx=False,
     console=DEBUG,
     icon=os.path.join(ROOT, "systray_client", "cerbere.ico"),
+    # requireAdministrator : WinDivert (sinkhole DNS), netsh et les règles
+    # pare-feu échouent sans élévation (WinError 5). Une appli de sécurité
+    # réseau doit tourner élevée — UAC demandé à chaque lancement.
+    uac_admin=True,
 )
 coll = COLLECT(
     exe,

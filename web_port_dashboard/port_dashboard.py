@@ -1454,25 +1454,45 @@ async def generate_audit_hardening_plan() -> Dict[str, Any]:
     """
     base_dir = paths.plans_dir()
     audit_file = paths.writable_root() / "audit_data.json"
+    audit_data = None
 
-    if not audit_file.is_file():
+    if audit_file.is_file():
+        try:
+            with audit_file.open("r", encoding="utf-8") as f:
+                audit_data = json.load(f)
+        except Exception as e:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Erreur lors de la lecture de audit_data.json : {e}"
+            )
+    else:
         fallback = Path("audit_data.json")
         if fallback.is_file():
-            audit_file = fallback.resolve()
+            try:
+                with fallback.open("r", encoding="utf-8") as f:
+                    audit_data = json.load(f)
+            except Exception as e:
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Erreur lors de la lecture de audit_data.json : {e}"
+                )
         else:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Fichier audit_data.json introuvable ({audit_file})"
-            )
-
-    try:
-        with audit_file.open("r", encoding="utf-8") as f:
-            audit_data = json.load(f)
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Erreur lors de la lecture de audit_data.json : {e}"
-        )
+            # Depuis l'application installée, audit_data.json n'est pas un
+            # artefact obligatoire : le scan périodique possède déjà les mêmes
+            # ports dans _snapshot. Matérialiser ce snapshot pour permettre
+            # l'application directe des recommandations.
+            if _snapshot is None:
+                raise HTTPException(
+                    status_code=503,
+                    detail="Aucun scan réseau disponible pour générer le plan"
+                )
+            audit_data = {
+                "exposed_ports_detail": [
+                    port for port in _snapshot.get("ports", [])
+                    if port.get("local_ip") in {"0.0.0.0", "*", "::"}
+                    and not port.get("firewall_blocked", False)
+                ]
+            }
 
     exposed_ports = audit_data.get("exposed_ports_detail", [])
     ports_payload = []
@@ -1689,13 +1709,17 @@ async def get_filter_status() -> Dict[str, Any]:
         else:
             whitelist_count = len(_get_effective_whitelist())
 
+        initialization_error = (
+            getattr(_sinkhole, "initialization_error", None) if _sinkhole else None
+        )
         return {
-            "enabled": enabled,
+            "enabled": enabled and running,
             "running": running,
             "domains_count": domains_count,
             "queries_total": queries_total,
             "blocked_total": blocked_total,
             "whitelist_count": whitelist_count,
+            "error": initialization_error,
         }
     except Exception as e:
         print(f"Erreur get_filter_status: {e}")
@@ -1743,13 +1767,26 @@ async def start_filter() -> Dict[str, Any]:
 
         if not _sinkhole.running:
             _sinkhole.start()
+            await asyncio.sleep(0.15)
+
+        running = bool(getattr(_sinkhole, "running", False))
+        if not running:
+            error = getattr(_sinkhole, "initialization_error", None)
+            _save_filter_state({"enabled": False})
+            return {
+                "success": False,
+                "enabled": False,
+                "running": False,
+                "error": error,
+                "message": "Impossible de démarrer le filtrage DNS : privilèges administrateur requis",
+            }
 
         _save_filter_state({"enabled": True})
         logger.info("Filtrage DNS démarré (%d domaines en liste)", len(getattr(_sinkhole, "domaines", [])))
         return {
             "success": True,
             "enabled": True,
-            "running": getattr(_sinkhole, "running", False),
+            "running": True,
             "message": "Filtrage trackers démarré",
         }
     except (ImportError, Exception) as e:
