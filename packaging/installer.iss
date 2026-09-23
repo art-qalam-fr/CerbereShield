@@ -54,7 +54,7 @@ Filename: "{app}\{#ExeName}"; Verb: "runas"; Description: "Lancer {#AppName}"; F
 
 [UninstallRun]
 ; Arrêt propre du backend avant suppression des fichiers générés/verrouillés.
-Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -Command ""try { Invoke-RestMethod -Method Post -Uri 'http://localhost:4050/api/shutdown' -TimeoutSec 3 | Out-Null } catch {} ; Start-Sleep -Seconds 2"""; Flags: runhidden; RunOnceId: "StopCerbereBackend"
+Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -Command ""Invoke-RestMethod -Method Post -Uri 'http://localhost:4050/api/shutdown' -TimeoutSec 3 -ErrorAction SilentlyContinue | Out-Null; Start-Sleep -Seconds 2"""; Flags: runhidden; RunOnceId: "StopCerbereBackend"
 ; File d'état du systray séparé : arrêt forcé après la demande propre.
 Filename: "{sys}\taskkill.exe"; Parameters: "/f /t /im WebPortSystray.exe"; Flags: runhidden; RunOnceId: "StopCerbereSystray"
 Filename: "{sys}\taskkill.exe"; Parameters: "/f /t /im CerbereShield.exe"; Flags: runhidden; RunOnceId: "StopCerbereBackendProcess"
