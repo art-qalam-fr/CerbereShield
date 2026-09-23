@@ -733,6 +733,12 @@ async def update_settings(payload: Dict[str, Any]) -> Dict[str, Any]:
     if "external_min_severity" in payload:
         cfg["external_min_severity"] = max(0, min(100, int(payload["external_min_severity"])))
 
+    ui_payload = payload.get("ui") or {}
+    if isinstance(ui_payload, dict) and ui_payload.get("launch_mode") in ("browser", "desktop", "both"):
+        ui_cfg = dict(cfg.get("ui") or {})
+        ui_cfg["launch_mode"] = ui_payload["launch_mode"]
+        cfg["ui"] = ui_cfg
+
     access_payload = payload.get("access") or {}
     if isinstance(access_payload, dict):
         if "enabled" in access_payload:

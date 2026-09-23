@@ -29,7 +29,7 @@ on:
       release_tag:
         description: "Tag de la release (si publication)"
         required: false
-        default: "v0.9.11-beta"   # les tags de releases immuables ne sont pas reutilisables
+        default: "v0.9.12-beta"   # les tags de releases immuables ne sont pas reutilisables
 
 permissions:
   contents: write   # upload-artifact + release
@@ -128,6 +128,8 @@ jobs:
           Copy-Item "scripts" "$dst\scripts" -Recurse -Force
           $sys = "systray_client\bin\Release\net6.0-windows\win-x64\publish\WebPortSystray.exe"
           if (Test-Path $sys) { Copy-Item $sys $dst -Force }
+          $desktop = "frontend_react\src-tauri\target\release\cerbere-shield-desktop.exe"
+          if (Test-Path $desktop) { Copy-Item $desktop "$dst\CerbereDesktop.exe" -Force }
           Compress-Archive -Path "portable\CerbereShield" -DestinationPath "CerbereShield_portable.zip" -Force
 
       - uses: actions/upload-artifact@v4

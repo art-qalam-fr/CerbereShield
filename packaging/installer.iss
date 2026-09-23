@@ -2,7 +2,7 @@
 ; Build : iscc packaging\installer.iss   (après build.bat / PyInstaller)
 
 #define AppName "Cerbere Security Shield"
-#define AppVersion "0.9.11"
+#define AppVersion "0.9.12"
 #define AppPublisher "ArchNext"
 #define ExeName "CerbereShield.exe"
 
@@ -37,6 +37,8 @@ Name: "startupicon"; Description: "Lancer au démarrage de Windows"; GroupDescri
 Source: "..\dist\CerbereShield\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; Systray C# (binaire publié, si présent)
 Source: "..\systray_client\bin\Release\net6.0-windows\win-x64\publish\WebPortSystray.exe"; DestDir: "{app}"; Flags: ignoreversion skipifsourcedoesntexist
+; Frontend Desktop Tauri (optionnel, le mode Browser reste disponible)
+Source: "..\frontend_react\src-tauri\target\release\cerbere-shield-desktop.exe"; DestDir: "{app}"; DestName: "CerbereDesktop.exe"; Flags: ignoreversion skipifsourcedoesntexist
 ; Scripts de durcissement (conservés à la racine d'installation)
 Source: "..\scripts\*"; DestDir: "{app}\scripts"; Excludes: "__pycache__"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
 

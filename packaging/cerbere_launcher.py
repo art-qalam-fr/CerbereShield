@@ -36,6 +36,42 @@ def _start_systray() -> None:
         )
 
 
+def _launch_frontends(paths) -> None:
+    """Ouvre Browser, Desktop ou les deux selon config.ui.launch_mode."""
+    import yaml
+
+    mode = "browser"
+    try:
+        config_path = paths.config_file()
+        if config_path.exists():
+            config = yaml.safe_load(config_path.read_text(encoding="utf-8")) or {}
+            mode = str((config.get("ui") or {}).get("launch_mode") or "browser").lower()
+    except Exception as exc:
+        print(f"[Cerbere] Mode UI illisible, fallback browser: {exc}")
+
+    if mode not in {"browser", "desktop", "both"}:
+        mode = "browser"
+
+    desktop_candidates = [
+        Path(sys.executable).resolve().parent / "CerbereDesktop.exe",
+        Path(sys.executable).resolve().parent / "cerbere-shield-desktop.exe",
+        Path(__file__).resolve().parents[1] / "frontend_react" / "src-tauri" / "target" / "release" / "cerbere-shield-desktop.exe",
+    ]
+    desktop = next((candidate for candidate in desktop_candidates if candidate.exists()), None)
+    desktop_started = False
+
+    if mode in {"desktop", "both"} and desktop is not None:
+        subprocess.Popen(
+            [str(desktop)],
+            cwd=str(desktop.parent),
+            creationflags=getattr(subprocess, "DETACHED_PROCESS", 0),
+        )
+        desktop_started = True
+
+    if mode in {"browser", "both"} or not desktop_started:
+        threading.Timer(1.5, lambda: webbrowser.open("http://localhost:4050/")).start()
+
+
 def main() -> None:
     import cerbere_paths as paths
 
@@ -64,7 +100,7 @@ def main() -> None:
     # Référence partagée : permet l'arrêt propre via /api/shutdown
     dashboard._uvicorn_server = server
 
-    threading.Timer(1.5, lambda: webbrowser.open("http://localhost:4050/")).start()
+    _launch_frontends(paths)
 
     if paths.is_frozen():
         _start_systray()
