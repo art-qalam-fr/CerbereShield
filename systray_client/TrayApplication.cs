@@ -27,8 +27,13 @@ public class TrayApplication : ApplicationContext
 
     // Éléments de menu mis à jour selon l'état courant
     private readonly ToolStripMenuItem _statusItem;
+    private readonly ToolStripMenuItem _filterStatusItem;
+    private readonly ToolStripMenuItem _hardeningStatusItem;
     private readonly ToolStripMenuItem _enableItem;
     private readonly ToolStripMenuItem _disableItem;
+    private readonly ToolStripMenuItem _filterToggleItem;
+    private bool _protectionEnabled;
+    private bool _filterRunning;
 
     // AUMID explicite : permet à Windows 10/11 d'attribuer les notifications
     // toast à l'application (sinon elles peuvent être avalées/masquées).
@@ -81,17 +86,21 @@ public class TrayApplication : ApplicationContext
         };
 
         var menu = new ContextMenuStrip();
-        _statusItem = new ToolStripMenuItem("⚫ Cerbere : état inconnu")
+        _statusItem = CreateStatusMenuItem("Protection : état inconnu", Color.Gray);
+        _filterStatusItem = CreateStatusMenuItem("Filtrage DNS : état inconnu", Color.Gray);
+        _hardeningStatusItem = new ToolStripMenuItem("Dernier durcissement : aucun résultat")
         {
             Enabled = false,
-            Font = new Font(menu.Font, FontStyle.Bold)
+            Font = new Font(menu.Font, FontStyle.Italic)
         };
         menu.Items.Add(_statusItem);
+        menu.Items.Add(_filterStatusItem);
+        menu.Items.Add(_hardeningStatusItem);
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add("Ouvrir le Cerbere Security Shield", null, (_, _) => OpenDashboard());
-        _enableItem = (ToolStripMenuItem)menu.Items.Add("🟢 Activer la protection", null, async (_, _) => await SetProtectionAsync(true));
-        _disableItem = (ToolStripMenuItem)menu.Items.Add("🔴 Désactiver la protection", null, async (_, _) => await SetProtectionAsync(false));
-        menu.Items.Add("Filtrage trackers : on/off", null, async (_, _) => await ToggleTrackerFilterAsync());
+        _enableItem = (ToolStripMenuItem)menu.Items.Add("Activer la protection", null, async (_, _) => await SetProtectionAsync(true));
+        _disableItem = (ToolStripMenuItem)menu.Items.Add("Désactiver la protection", null, async (_, _) => await SetProtectionAsync(false));
+        _filterToggleItem = (ToolStripMenuItem)menu.Items.Add("Activer le filtrage DNS", null, async (_, _) => await ToggleTrackerFilterAsync());
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add("Appliquer plan durcissement", null, (_, _) => RunHardeningScript("harden"));
         menu.Items.Add("Appliquer plan libération", null, (_, _) => RunHardeningScript("release"));
@@ -104,7 +113,7 @@ public class TrayApplication : ApplicationContext
         {
             Interval = 10000
         };
-        _timer.Tick += async (_, _) => await RefreshStateAsync();
+        _timer.Tick += async (_, _) => await RefreshAllStatesAsync();
         _timer.Start();
 
         _alertTimer = new System.Windows.Forms.Timer
@@ -115,7 +124,7 @@ public class TrayApplication : ApplicationContext
         _alertTimer.Start();
 
         // Premier rafraîchissement immédiat
-        _ = RefreshStateAsync();
+        _ = RefreshAllStatesAsync();
         _ = CheckAlertsAsync();
     }
 
@@ -140,6 +149,30 @@ public class TrayApplication : ApplicationContext
         return Icon.FromHandle(h);
     }
 
+    private static ToolStripMenuItem CreateStatusMenuItem(string text, Color color)
+    {
+        var item = new ToolStripMenuItem(text)
+        {
+            Enabled = false,
+            Font = new Font(SystemFonts.DefaultFont, FontStyle.Bold),
+            Image = CreateStatusDot(color),
+            ImageScaling = ToolStripItemImageScaling.None,
+        };
+        return item;
+    }
+
+    private static Bitmap CreateStatusDot(Color color)
+    {
+        var dot = new Bitmap(12, 12);
+        using var graphics = Graphics.FromImage(dot);
+        graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+        using var brush = new SolidBrush(color);
+        using var pen = new Pen(Color.White, 1f);
+        graphics.FillEllipse(brush, 1, 1, 10, 10);
+        graphics.DrawEllipse(pen, 1, 1, 10, 10);
+        return dot;
+    }
+
     private void OpenDashboard()
     {
         try
@@ -162,19 +195,35 @@ public class TrayApplication : ApplicationContext
     {
         try
         {
-            var payload = JsonSerializer.Serialize(new { enabled });
-            using var content = new StringContent(payload, System.Text.Encoding.UTF8, "application/json");
-            using var response = await _httpClient.PostAsync(ApiStateUrl, content);
+            string url = enabled ? ApiFilterStartUrl : ApiFilterStopUrl;
+            using var response = await _httpClient.PostAsync(url, null);
+            string body = await response.Content.ReadAsStringAsync();
             response.EnsureSuccessStatusCode();
-            await RefreshStateAsync();
+            using var doc = JsonDocument.Parse(body);
+            if (doc.RootElement.TryGetProperty("success", out var successProp)
+                && !successProp.GetBoolean())
+            {
+                string message = doc.RootElement.TryGetProperty("message", out var msg)
+                    ? msg.GetString() ?? "Opération refusée"
+                    : "Opération refusée";
+                throw new InvalidOperationException(message);
+            }
+
+            await RefreshAllStatesAsync();
+            _notifyIcon.BalloonTipTitle = "Protection réseau";
+            _notifyIcon.BalloonTipText = _filterRunning
+                ? "Protection réseau active."
+                : "Protection réseau désactivée.";
+            _notifyIcon.ShowBalloonTip(4000);
         }
         catch (Exception ex)
         {
             _notifyIcon.Icon = _iconOffline;
-            _notifyIcon.Text = "Web Port Protection - serveur indisponible";
-            _notifyIcon.BalloonTipTitle = "Web Port Protection";
-            _notifyIcon.BalloonTipText = "Erreur lors de la mise à jour de l'état : " + ex.Message;
-            _notifyIcon.ShowBalloonTip(3000);
+            _notifyIcon.Text = "Cerbere Security Shield - erreur de protection";
+            _notifyIcon.BalloonTipTitle = "Protection réseau";
+            _notifyIcon.BalloonTipText = "Impossible de modifier la protection : " + ex.Message;
+            _notifyIcon.ShowBalloonTip(4000);
+            await RefreshAllStatesAsync();
         }
     }
 
@@ -187,32 +236,36 @@ public class TrayApplication : ApplicationContext
             var json = await response.Content.ReadAsStringAsync();
 
             using var doc = JsonDocument.Parse(json);
-            bool isRunningOrEnabled = false;
-            if (doc.RootElement.TryGetProperty("running", out var runningProp) && runningProp.GetBoolean())
-            {
-                isRunningOrEnabled = true;
-            }
-            else if (doc.RootElement.TryGetProperty("enabled", out var enabledProp) && enabledProp.GetBoolean())
-            {
-                isRunningOrEnabled = true;
-            }
+            bool isRunning = doc.RootElement.TryGetProperty("running", out var runningProp)
+                && runningProp.GetBoolean();
 
-            if (isRunningOrEnabled)
+            if (isRunning)
             {
                 using var stopRes = await _httpClient.PostAsync(ApiFilterStopUrl, null);
                 stopRes.EnsureSuccessStatusCode();
-                _notifyIcon.BalloonTipTitle = "Filtrage trackers";
-                _notifyIcon.BalloonTipText = "Filtrage trackers désactivé";
-                _notifyIcon.ShowBalloonTip(3000);
             }
             else
             {
                 using var startRes = await _httpClient.PostAsync(ApiFilterStartUrl, null);
+                var startBody = await startRes.Content.ReadAsStringAsync();
                 startRes.EnsureSuccessStatusCode();
-                _notifyIcon.BalloonTipTitle = "Filtrage trackers";
-                _notifyIcon.BalloonTipText = "Filtrage trackers activé";
-                _notifyIcon.ShowBalloonTip(3000);
+                using var startDoc = JsonDocument.Parse(startBody);
+                if (startDoc.RootElement.TryGetProperty("success", out var successProp)
+                    && !successProp.GetBoolean())
+                {
+                    string message = startDoc.RootElement.TryGetProperty("message", out var msg)
+                        ? msg.GetString() ?? "Démarrage refusé"
+                        : "Démarrage du filtrage refusé";
+                    throw new InvalidOperationException(message);
+                }
             }
+
+            await RefreshAllStatesAsync();
+            _notifyIcon.BalloonTipTitle = "Filtrage DNS";
+            _notifyIcon.BalloonTipText = _filterRunning
+                ? "Filtrage DNS actif : interception WinDivert confirmée."
+                : "Filtrage DNS arrêté.";
+            _notifyIcon.ShowBalloonTip(4000);
         }
         catch (Exception ex)
         {
@@ -222,41 +275,91 @@ public class TrayApplication : ApplicationContext
         }
     }
 
-    private async Task RefreshStateAsync()
+    private async Task RefreshAllStatesAsync()
+    {
+        bool protectionAvailable = await RefreshProtectionStateAsync();
+        bool filterAvailable = await RefreshFilterStatusAsync();
+
+        if (!protectionAvailable && !filterAvailable)
+        {
+            _notifyIcon.Icon = _iconOffline;
+            _notifyIcon.Text = "Cerbere Security Shield - serveur indisponible";
+            return;
+        }
+
+        bool protectedNow = _protectionEnabled && _filterRunning;
+        _notifyIcon.Icon = protectedNow ? _iconOnlineEnabled : _iconOnlineDisabled;
+        _notifyIcon.Text = protectedNow
+            ? "Cerbere Security Shield - protection active"
+            : "Cerbere Security Shield - protection incomplète";
+    }
+
+    private async Task<bool> RefreshProtectionStateAsync()
     {
         try
         {
             using var response = await _httpClient.GetAsync(ApiStateUrl);
             response.EnsureSuccessStatusCode();
-            var json = await response.Content.ReadAsStringAsync();
+            using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+            _protectionEnabled = doc.RootElement.TryGetProperty("enabled", out var enabledProp)
+                && enabledProp.GetBoolean();
 
-            using var doc = JsonDocument.Parse(json);
-            bool enabled = doc.RootElement.TryGetProperty("enabled", out var enabledProp) && enabledProp.GetBoolean();
-
-            if (enabled)
-            {
-                _notifyIcon.Icon = _iconOnlineEnabled;
-                _notifyIcon.Text = "Cerbere Security Shield - protection ACTIVÉE";
-                _statusItem.Text = "🟢 Protection activée — vous êtes protégé";
-                _enableItem.Enabled = false;
-                _disableItem.Enabled = true;
-            }
-            else
-            {
-                _notifyIcon.Icon = _iconOnlineDisabled;
-                _notifyIcon.Text = "Cerbere Security Shield - protection DÉSACTIVÉE";
-                _statusItem.Text = "🔴 Protection désactivée — vous n'êtes pas protégé";
-                _enableItem.Enabled = true;
-                _disableItem.Enabled = false;
-            }
+            _statusItem.Text = _protectionEnabled
+                ? "Protection globale : active"
+                : "Protection globale : inactive";
+            _statusItem.Image = CreateStatusDot(_protectionEnabled ? Color.LimeGreen : Color.Red);
+            _enableItem.Enabled = !_protectionEnabled;
+            _disableItem.Enabled = _protectionEnabled;
+            return true;
         }
         catch
         {
-            _notifyIcon.Icon = _iconOffline;
-            _notifyIcon.Text = "Cerbere Security Shield - serveur indisponible";
-            _statusItem.Text = "⚫ Cerbere : serveur indisponible";
+            _statusItem.Text = "Protection globale : indisponible";
+            _statusItem.Image = CreateStatusDot(Color.Gray);
             _enableItem.Enabled = false;
             _disableItem.Enabled = false;
+            return false;
+        }
+    }
+
+    private async Task<bool> RefreshFilterStatusAsync()
+    {
+        try
+        {
+            using var response = await _httpClient.GetAsync(ApiFilterStatusUrl);
+            response.EnsureSuccessStatusCode();
+            using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+            _filterRunning = doc.RootElement.TryGetProperty("running", out var runningProp)
+                && runningProp.GetBoolean();
+            bool enabled = doc.RootElement.TryGetProperty("enabled", out var enabledProp)
+                && enabledProp.GetBoolean();
+            string? error = doc.RootElement.TryGetProperty("error", out var errorProp)
+                ? errorProp.GetString()
+                : null;
+
+            _filterStatusItem.Text = _filterRunning
+                ? "Filtrage DNS : actif"
+                : (string.IsNullOrWhiteSpace(error) ? "Filtrage DNS : arrêté" : "Filtrage DNS : erreur");
+            _filterStatusItem.Image = CreateStatusDot(_filterRunning
+                ? Color.LimeGreen
+                : (string.IsNullOrWhiteSpace(error) ? Color.Red : Color.DarkOrange));
+            _filterToggleItem.Text = _filterRunning
+                ? "Désactiver le filtrage DNS"
+                : "Activer le filtrage DNS";
+            _filterToggleItem.Enabled = true;
+            if (!string.IsNullOrWhiteSpace(error))
+            {
+                _filterStatusItem.ToolTipText = error;
+            }
+            return true;
+        }
+        catch
+        {
+            _filterRunning = false;
+            _filterStatusItem.Text = "Filtrage DNS : indisponible";
+            _filterStatusItem.Image = CreateStatusDot(Color.Gray);
+            _filterToggleItem.Enabled = false;
+            return false;
         }
     }
 
@@ -492,11 +595,29 @@ public class TrayApplication : ApplicationContext
                 p.EnableRaisingEvents = true;
                 p.Exited += (s, e) =>
                 {
-                    _notifyIcon.BalloonTipTitle = "Cerbere Security Shield";
-                    _notifyIcon.BalloonTipText = (p.ExitCode == 0)
-                        ? (action == "release" ? "Libération des ports effectuée." : "Plan de durcissement appliqué.")
-                        : ("Échec du script (code " + p.ExitCode + ")");
-                    _notifyIcon.ShowBalloonTip(5000);
+                    int exitCode = p.ExitCode;
+                    string result = exitCode == 0
+                        ? (action == "release" ? "Libération des ports confirmée" : "Durcissement confirmé")
+                        : $"Échec du {action} (code {exitCode})";
+                    void UpdateMenu()
+                    {
+                        _hardeningStatusItem.Text = $"Dernier {action} : {result}";
+                        _hardeningStatusItem.ForeColor = exitCode == 0 ? Color.LimeGreen : Color.Red;
+                        _notifyIcon.BalloonTipTitle = "Cerbere Security Shield";
+                        _notifyIcon.BalloonTipText = result;
+                        _notifyIcon.ShowBalloonTip(5000);
+                        _ = RefreshAllStatesAsync();
+                    }
+
+                    if (_hardeningStatusItem.GetCurrentParent() is not null
+                        && _hardeningStatusItem.GetCurrentParent()!.InvokeRequired)
+                    {
+                        _hardeningStatusItem.GetCurrentParent()!.BeginInvoke((Action)UpdateMenu);
+                    }
+                    else
+                    {
+                        UpdateMenu();
+                    }
                 };
             }
         }

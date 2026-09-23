@@ -802,6 +802,13 @@ def _save_protection_state(state: ProtectionState) -> None:
     state_file.write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
 
+def _sync_protection_state(enabled: bool) -> None:
+    state = _load_protection_state()
+    state.enabled = enabled
+    state.last_change = datetime.utcnow().isoformat() + "Z"
+    _save_protection_state(state)
+
+
 def _load_port_selection() -> PortSelectionConfig:
     """Charge la configuration de sélection de ports depuis le fichier JSON."""
 
@@ -1773,6 +1780,7 @@ async def start_filter() -> Dict[str, Any]:
         if not running:
             error = getattr(_sinkhole, "initialization_error", None)
             _save_filter_state({"enabled": False})
+            _sync_protection_state(False)
             return {
                 "success": False,
                 "enabled": False,
@@ -1782,6 +1790,7 @@ async def start_filter() -> Dict[str, Any]:
             }
 
         _save_filter_state({"enabled": True})
+        _sync_protection_state(True)
         logger.info("Filtrage DNS démarré (%d domaines en liste)", len(getattr(_sinkhole, "domaines", [])))
         return {
             "success": True,
@@ -1809,6 +1818,7 @@ async def stop_filter() -> Dict[str, Any]:
                 _sinkhole.stop()
             _sinkhole = None
         _save_filter_state({"enabled": False})
+        _sync_protection_state(False)
         logger.info("Filtrage DNS arrêté")
         return {
             "success": True,
