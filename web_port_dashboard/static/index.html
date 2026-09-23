@@ -2565,8 +2565,9 @@ function updateModalExternalLinks(links, fallbackProcName, port) {
     const linkPL = document.getElementById("modalLinkPL");
     const linkSG = document.getElementById("modalLinkSG");
     const linkSANS = document.getElementById("modalLinkSANS");
+    const linkGRC = document.getElementById("modalLinkGRC");
 
-    // SpeedGuide & SANS ISC (immédiatement configurés dès l'ouverture de la modal)
+    // SpeedGuide, SANS ISC et GRC (immédiatement configurés dès l'ouverture de la modal)
     const validPort = (port !== undefined && port !== null && port !== "—" && port !== "");
     if (linkSG) {
         if (validPort) {
@@ -2584,6 +2585,22 @@ function updateModalExternalLinks(links, fallbackProcName, port) {
         } else {
             linkSANS.href = "#";
             linkSANS.classList.add("disabled");
+        }
+    }
+    if (linkGRC) {
+        const numericPort = Number(port);
+        const validNumericPort = Number.isInteger(numericPort)
+            && numericPort >= 0 && numericPort <= 65535;
+        if (validNumericPort) {
+            // GRC possède une page dédiée au port 0 ; les autres ports
+            // utilisent la page port_<numéro>.htm demandée par l'utilisateur.
+            linkGRC.href = numericPort === 0
+                ? "https://www.grc.com/port_0.htm"
+                : `http://www.grc.com/port_${numericPort}.htm`;
+            linkGRC.classList.remove("disabled");
+        } else {
+            linkGRC.href = "#";
+            linkGRC.classList.add("disabled");
         }
     }
 
