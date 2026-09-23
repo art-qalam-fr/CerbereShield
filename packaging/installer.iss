@@ -2,7 +2,7 @@
 ; Build : iscc packaging\installer.iss   (après build.bat / PyInstaller)
 
 #define AppName "Cerbere Security Shield"
-#define AppVersion "0.9.8"
+#define AppVersion "0.9.9"
 #define AppPublisher "ArchNext"
 #define ExeName "CerbereShield.exe"
 
@@ -11,8 +11,8 @@ AppId={{B7E2A1C4-9F3D-4E5A-A1B2-C3D4E5F6A7B8}
 AppName={#AppName}
 AppVersion={#AppVersion}
 AppPublisher={#AppPublisher}
-; Installation par utilisateur : pas d'UAC, dossier inscriptible
-PrivilegesRequired=lowest
+; Installation élevée : nécessaire pour arrêter proprement les processus réseau
+PrivilegesRequired=admin
 DefaultDirName={localappdata}\Programs\CerbereShield
 DefaultGroupName={#AppName}
 OutputDir=..\dist\installer
@@ -53,4 +53,13 @@ Filename: "schtasks"; Parameters: "/create /tn ""CerbereShield"" /tr ""{app}\{#E
 Filename: "{app}\{#ExeName}"; Verb: "runas"; Description: "Lancer {#AppName}"; Flags: postinstall shellexec skipifsilent
 
 [UninstallRun]
+; Arrêt propre du backend avant suppression des fichiers générés/verrouillés.
+Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -Command ""try { Invoke-RestMethod -Method Post -Uri 'http://localhost:4050/api/shutdown' -TimeoutSec 3 | Out-Null } catch {} ; Start-Sleep -Seconds 2"""; Flags: runhidden; RunOnceId: "StopCerbereBackend"
+; File d'état du systray séparé : arrêt forcé après la demande propre.
+Filename: "{sys}\taskkill.exe"; Parameters: "/f /t /im WebPortSystray.exe"; Flags: runhidden; RunOnceId: "StopCerbereSystray"
+Filename: "{sys}\taskkill.exe"; Parameters: "/f /t /im CerbereShield.exe"; Flags: runhidden; RunOnceId: "StopCerbereBackendProcess"
 Filename: "schtasks"; Parameters: "/delete /tn ""CerbereShield"" /f"; Flags: runhidden; RunOnceId: "DelCerbereTask"
+
+[UninstallDelete]
+; Supprime aussi les logs et dossiers créés après l'installation (logs/_internal).
+Type: filesandordirs; Name: "{app}"
