@@ -555,7 +555,7 @@
     <div class="actions">
         <button id="startDetectionBtn" class="btn" onclick="toggleDetection()" data-i18n-title="intrusion.btn.toggle.title" title="Démarre ou arrête la surveillance d'intrusion en continu :&#10;détection de scans de ports et de connexions entrantes suspectes.">Arrêter la surveillance</button>
         <button id="refreshIntrusionBtn" class="btn" onclick="refreshIntrusion()" data-i18n="btn.refresh" data-i18n-title="intrusion.btn.refresh.title" title="Recharge les données de surveillance :&#10;connexions récentes, alertes d'intrusion et IPs bannies.">Actualiser</button>
-        <button class="btn" onclick="testDetection()" style="background: #7c3aed;" data-i18n="intrusion.btn.test" data-i18n-title="intrusion.btn.test.title" title="Déclenche un faux événement d'intrusion pour vérifier&#10;que la détection et les notifications Windows fonctionnent.">Tester la détection</button>
+        <button class="btn" onclick="testDetection()" style="background: #7c3aed;" data-i18n="intrusion.btn.test" data-i18n-title="intrusion.btn.test.title" title="Injecte des événements TEST-NET dans le vrai pipeline :&#10;persistance, seuil de détection, règle pare-feu et alerte.">Tester la détection</button>
         <span class="hint" id="detectionStatus" style="color: #bbf7d0;">Surveillance continue : active (0 IP bannies)</span>
     </div>
 
@@ -1183,6 +1183,15 @@
                 <input type="number" id="setScanInterval" min="5" max="3600" style="width: 6rem;">
             </label>
             <span class="hint" data-i18n="settings.scan.hint">Fréquence de l'analyse des ports (défaut : 30 s). Pris en compte au cycle suivant, sans redémarrage.</span>
+        </div>
+        <div class="settings-card" style="grid-column: 1 / -1;">
+            <h4>Vérification de santé</h4>
+            <p class="hint">Contrôle local non destructif du backend, de la base intrusion, du filtrage DNS, des chemins installés et des listes.</p>
+            <div class="actions" style="margin-top:0.6rem;">
+                <button class="btn" id="runHealthcheckBtn" onclick="runHealthcheck()">Lancer le test de santé</button>
+                <span id="healthcheckStatus" class="hint"></span>
+            </div>
+            <div id="healthcheckReport" style="margin-top:0.6rem;"></div>
         </div>
         <div class="settings-card">
             <h4 data-i18n="settings.classif.title">Classification des ports</h4>
@@ -3164,14 +3173,46 @@ async function testDetection() {
         const data = await resp.json();
         
         if (data.success) {
-            alert(t('intrusion.test.ok'));
+            alert(`${data.message}\n\nIP de test : ${data.source_ip}\nÉvénements persistés : ${data.event_count}`);
             refreshIntrusion();
         } else {
-            alert(t('common.error', {msg: data.message}));
+            alert(`${data.message || t('intrusion.test.error')}\n\nIP de test : ${data.source_ip || '—'}\nÉvénements persistés : ${data.event_count || 0}`);
+            refreshIntrusion();
         }
     } catch (err) {
         console.error("Erreur lors du test:", err);
         alert(t('intrusion.test.error'));
+    }
+}
+
+async function runHealthcheck() {
+    const button = document.getElementById("runHealthcheckBtn");
+    const status = document.getElementById("healthcheckStatus");
+    const report = document.getElementById("healthcheckReport");
+    if (button) button.disabled = true;
+    if (status) status.textContent = "Vérification en cours…";
+    try {
+        const response = await fetch("/api/healthcheck/run", { method: "POST" });
+        const data = await response.json();
+        const summary = data.summary || {};
+        if (status) {
+            status.textContent = `${summary.pass || 0} PASS · ${summary.warn || 0} WARN · ${summary.fail || 0} FAIL`;
+            status.style.color = summary.fail ? "#fca5a5" : (summary.warn ? "#fde68a" : "#bbf7d0");
+        }
+        if (report) {
+            report.innerHTML = (data.checks || []).map(check => {
+                const color = check.status === "pass" ? "#86efac" : (check.status === "warn" ? "#fde68a" : "#fca5a5");
+                return `<div style="color:${color}; margin:0.25rem 0;"><strong>${escapeHtml(check.status.toUpperCase())}</strong> — ${escapeHtml(check.id)} : ${escapeHtml(check.message)}</div>`;
+            }).join("");
+        }
+    } catch (error) {
+        if (status) {
+            status.textContent = "Échec du test de santé";
+            status.style.color = "#fca5a5";
+        }
+        if (report) report.textContent = error.message || String(error);
+    } finally {
+        if (button) button.disabled = false;
     }
 }
 

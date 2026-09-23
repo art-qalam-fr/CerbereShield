@@ -473,6 +473,7 @@ _GUARDED_POST_PATHS = {
     "/api/intrusion/start",
     "/api/intrusion/stop",
     "/api/intrusion/test",
+    "/api/healthcheck/run",
     "/api/filter/whitelist",
     "/api/filter/whitelist/reset",
     "/api/protection/state",
@@ -1643,34 +1644,127 @@ async def start_intrusion_detection() -> Dict[str, Any]:
         return {"success": True, "message": "Surveillance déjà en cours"}
 
 
+@app.post("/api/healthcheck/run")
+async def run_healthcheck() -> Dict[str, Any]:
+    """Vérification locale non destructive des composants Cerbere."""
+    run_id = f"health-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+    checks: List[Dict[str, Any]] = []
+
+    def add_check(check_id: str, status: str, message: str, evidence: Optional[Dict[str, Any]] = None) -> None:
+        checks.append({
+            "id": check_id,
+            "status": status,
+            "message": message,
+            "evidence": evidence or {},
+        })
+
+    add_check("backend.api", "pass", "Backend disponible", {"port": 4050})
+
+    detector = get_detector()
+    if detector is None:
+        add_check("intrusion.detector", "fail", "Détecteur d'intrusion indisponible")
+    else:
+        try:
+            dashboard = await asyncio.to_thread(detector.get_dashboard_data)
+            add_check(
+                "intrusion.database",
+                "pass",
+                "Base intrusion lisible",
+                {"db_path": detector.db_path, "events_24h": dashboard.get("stats", {}).get("total_events", 0)},
+            )
+        except Exception as exc:
+            add_check("intrusion.database", "fail", f"Base intrusion illisible : {exc}")
+
+    try:
+        filter_status = await get_filter_status()
+        if filter_status.get("running"):
+            add_check("dns.filter", "pass", "Filtrage DNS actif et thread WinDivert en fonctionnement", filter_status)
+        elif filter_status.get("error"):
+            add_check("dns.filter", "fail", f"Filtrage DNS en erreur : {filter_status['error']}", filter_status)
+        else:
+            add_check("dns.filter", "warn", "Filtrage DNS arrêté — activation manuelle nécessaire", filter_status)
+    except Exception as exc:
+        add_check("dns.filter", "fail", f"Statut DNS indisponible : {exc}")
+
+    scripts_root = paths.scripts_dir()
+    hardening_script = scripts_root / "powershell" / "security_hardening.ps1"
+    add_check(
+        "packaging.paths",
+        "pass" if hardening_script.is_file() else "fail",
+        "Scripts installés détectés" if hardening_script.is_file() else "Script de durcissement introuvable",
+        {"scripts_dir": str(scripts_root), "hardening_script": str(hardening_script)},
+    )
+
+    state_dir = paths.state_dir()
+    domains_file = state_dir / "filter_lists" / "domains.txt"
+    add_check(
+        "filter.lists",
+        "pass" if domains_file.is_file() and domains_file.stat().st_size > 0 else "warn",
+        "Cache de domaines disponible" if domains_file.is_file() else "Aucun cache de domaines disponible",
+        {"domains_file": str(domains_file)},
+    )
+
+    add_check(
+        "notifications.manual",
+        "warn",
+        "Notification Windows à valider manuellement avec un événement réel",
+    )
+
+    summary = {status: sum(1 for check in checks if check["status"] == status) for status in ("pass", "warn", "fail")}
+    return {
+        "success": summary["fail"] == 0,
+        "run_id": run_id,
+        "started_at": datetime.now().isoformat(),
+        "summary": summary,
+        "checks": checks,
+    }
+
+
 @app.post("/api/intrusion/test")
 async def test_intrusion_detection() -> Dict[str, Any]:
-    """Simuler une attaque pour tester la détection"""
+    """Exécute un test réel avec événements TEST-NET et pare-feu Windows."""
     detector = _require_detector()
-    if detector:
-        try:
-            # Créer un événement de test sans importer SecurityEvent
-            from datetime import datetime
-            
-            # Construire un vrai SecurityEvent pour le détecteur
-            from intrusion_detector import SecurityEvent
-            test_event = SecurityEvent(
+    try:
+        from datetime import datetime
+        from intrusion_detector import SecurityEvent
+
+        test_ip = "192.0.2.1"  # TEST-NET-1 : jamais une adresse utilisateur réelle
+        threshold = max(1, int(detector.thresholds.get("failed_login", 5)))
+        test_events = [
+            SecurityEvent(
                 timestamp=datetime.now(),
-                event_type="FAILED_LOGIN",
-                source_ip="192.0.2.1",  # IP de test (TEST-NET-1)
-                target_service="ssh",
-                details="Test event - failed login attempt",
-                severity="HIGH"
+                event_type="FAILED_LOGIN_TEST",
+                source_ip=test_ip,
+                target_service="SSH-TEST",
+                details=f"Cerbere health-check failed login {index + 1}/{threshold}",
+                severity="HIGH",
             )
-            
-            # Traiter l'événement
-            detector.detect_intrusions([test_event])
-            
-            return {"success": True, "message": "Événement de test injecté"}
-        except Exception as e:
-            print(f"Erreur lors du test: {e}")
-            return {"success": False, "message": f"Erreur: {str(e)}"}
-    return {"success": False, "message": "Détecteur non disponible"}
+            for index in range(threshold)
+        ]
+
+        # Ce chemin exécute le vrai pipeline : persistance SQLite, seuil,
+        # création de la règle Windows Firewall et callback d'alerte.
+        await asyncio.to_thread(detector.detect_intrusions, test_events)
+        banned = detector.is_banned(test_ip)
+        dashboard = detector.get_dashboard_data()
+        return {
+            "success": banned,
+            "event_count": threshold,
+            "source_ip": test_ip,
+            "banned": banned,
+            "recent_events": [
+                event for event in dashboard.get("recent_events", [])
+                if event.get("source_ip") == test_ip
+            ],
+            "message": (
+                "Test réel réussi : événements persistés et IP de test bannie."
+                if banned else
+                "Événements persistés, mais la règle pare-feu n'a pas été créée."
+            ),
+        }
+    except Exception as e:
+        logger.exception("Erreur lors du test réel d'intrusion")
+        return {"success": False, "message": f"Erreur: {str(e)}"}
 
 @app.post("/api/intrusion/stop")
 async def stop_intrusion_detection() -> Dict[str, Any]:

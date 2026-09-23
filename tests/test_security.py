@@ -136,6 +136,69 @@ def test_intrusion_monitoring_non_blocking():
     assert detector.running is False
 
 
+def test_intrusion_events_persist_and_trigger_real_threshold(tmp_path):
+    """Le pipeline réel persiste les événements et déclenche le seuil."""
+    config_file = tmp_path / "intrusion.json"
+    db_file = tmp_path / "intrusion.db"
+    config_file.write_text(
+        json.dumps({
+            "database_path": str(db_file),
+            "whitelist": [],
+            "failed_login_threshold": 2,
+            "ban_duration": 3600,
+        }),
+        encoding="utf-8",
+    )
+    detector = IntrusionDetector(config_path=str(config_file))
+    now = datetime.now()
+    events = [
+        SecurityEvent(now, "FAILED_LOGIN_TEST", "192.0.2.1", "SSH-TEST", "test-1", "HIGH"),
+        SecurityEvent(now, "FAILED_LOGIN_TEST", "192.0.2.1", "SSH-TEST", "test-2", "HIGH"),
+    ]
+
+    class FakeResult:
+        returncode = 0
+        stdout = "No rules match"
+
+    with patch("subprocess.run", side_effect=[FakeResult(), FakeResult()]):
+        detector.detect_intrusions(events)
+
+    assert detector.is_banned("192.0.2.1") is True
+    dashboard = detector.get_dashboard_data()
+    assert len([e for e in dashboard["recent_events"] if e["source_ip"] == "192.0.2.1"]) == 2
+    assert dashboard["active_bans"] == 1
+
+
+def test_healthcheck_returns_structured_local_report(tmp_path, monkeypatch):
+    """Le bouton de santé retourne une matrice PASS/WARN/FAIL structurée."""
+    class FakeDetector:
+        db_path = str(tmp_path / "intrusion.db")
+
+        def get_dashboard_data(self):
+            return {"stats": {"total_events": 3}}
+
+    scripts_dir = tmp_path / "scripts"
+    (scripts_dir / "powershell").mkdir(parents=True)
+    (scripts_dir / "powershell" / "security_hardening.ps1").write_text("# test", encoding="utf-8")
+    state_dir = tmp_path / "state"
+    (state_dir / "filter_lists").mkdir(parents=True)
+    (state_dir / "filter_lists" / "domains.txt").write_text("example.test\n", encoding="utf-8")
+    monkeypatch.setattr(port_dashboard, "get_detector", lambda: FakeDetector())
+    monkeypatch.setattr(port_dashboard.paths, "scripts_dir", lambda: scripts_dir)
+    monkeypatch.setattr(port_dashboard.paths, "state_dir", lambda: state_dir)
+
+    async def fake_filter_status():
+        return {"running": True, "enabled": True, "domains_count": 1}
+
+    monkeypatch.setattr(port_dashboard, "get_filter_status", fake_filter_status)
+    result = asyncio.run(port_dashboard.run_healthcheck())
+    assert result["success"] is True
+    assert result["summary"]["fail"] == 0
+    assert {check["id"] for check in result["checks"]} >= {
+        "backend.api", "intrusion.database", "dns.filter", "packaging.paths"
+    }
+
+
 def test_require_detector_503():
     """_require_detector lève HTTP 503 si le détecteur est indisponible."""
     with patch.object(port_dashboard, "get_detector", return_value=None):

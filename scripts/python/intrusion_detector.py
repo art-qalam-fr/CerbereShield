@@ -316,8 +316,13 @@ class IntrusionDetector:
             return "UNKNOWN", "LOW", "Unknown"
     
     def detect_intrusions(self, events: List[SecurityEvent]):
-        """Détecter les intrusions basées sur les événements"""
+        """Détecter les intrusions basées sur les événements et les persister."""
         
+        # Conserver chaque événement pour le dashboard et l'audit historique.
+        for event in events:
+            self.security_events.append(event)
+            self._save_security_event(event)
+
         # Grouper les événements par IP
         ip_events = defaultdict(list)
         for event in events:
@@ -327,6 +332,28 @@ class IntrusionDetector:
         # Analyser chaque IP
         for ip, ip_event_list in ip_events.items():
             self._analyze_ip_activity(ip, ip_event_list)
+
+    def _save_security_event(self, event: SecurityEvent) -> None:
+        """Persister un événement de sécurité dans SQLite."""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                conn.execute(
+                    """
+                    INSERT INTO security_events
+                    (timestamp, event_type, source_ip, target_service, details, severity)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        event.timestamp.isoformat(),
+                        event.event_type,
+                        event.source_ip,
+                        event.target_service,
+                        event.details,
+                        event.severity,
+                    ),
+                )
+        except Exception as exc:
+            logger.error("Impossible de persister l'événement d'intrusion : %s", exc)
     
     def _analyze_ip_activity(self, ip: str, events: List[SecurityEvent]):
         """Analyser l'activité d'une IP spécifique"""
@@ -367,34 +394,35 @@ class IntrusionDetector:
             check_cmd = ["netsh", "advfirewall", "firewall", "show", "rule", f"name={rule_name}"]
             result = subprocess.run(check_cmd, capture_output=True, text=True, **_paths.hidden_subprocess_kwargs())
             
-            if "No rules match" in result.stdout:
+            rule_exists = result.returncode == 0 and "No rules match" not in result.stdout
+            if not rule_exists:
                 # Créer la règle de blocage
                 block_cmd = ["netsh", "advfirewall", "firewall", "add", "rule", f"name={rule_name}", "dir=in", "action=block", f"remoteip={ip}"]
                 subprocess.run(block_cmd, check=True, **_paths.hidden_subprocess_kwargs())
-                
-                # Enregistrer le bannissement
-                ban_time = datetime.now()
-                unban_time = ban_time + timedelta(seconds=self.thresholds['ban_duration'])
-                
-                banned_ip = BannedIP(
-                    ip_address=ip,
-                    ban_time=ban_time,
-                    unban_time=unban_time,
-                    reason=reason,
-                    attempt_count=len(events),
-                    source_events=[str(e.timestamp) for e in events[:5]]
-                )
-                
-                self.banned_ips[ip] = banned_ip
-                self._save_banned_ip(banned_ip)
-                
-                logger.warning(f"IP {ip} bannie: {reason}")
-                
-                if self.alert_callback:
-                    try:
-                        self.alert_callback(90, 'Intrusion detectee : IP ' + ip + ' bannie - ' + reason)
-                    except:
-                        pass
+
+            # Enregistrer le bannissement, y compris si la règle existait déjà.
+            ban_time = datetime.now()
+            unban_time = ban_time + timedelta(seconds=self.thresholds['ban_duration'])
+
+            banned_ip = BannedIP(
+                ip_address=ip,
+                ban_time=ban_time,
+                unban_time=unban_time,
+                reason=reason,
+                attempt_count=len(events),
+                source_events=[str(e.timestamp) for e in events[:5]]
+            )
+
+            self.banned_ips[ip] = banned_ip
+            self._save_banned_ip(banned_ip)
+
+            logger.warning(f"IP {ip} bannie: {reason}")
+
+            if self.alert_callback:
+                try:
+                    self.alert_callback(90, 'Intrusion detectee : IP ' + ip + ' bannie - ' + reason)
+                except Exception:
+                    pass
                 
         except subprocess.CalledProcessError as e:
             logger.error(f"Erreur lors du bannissement de {ip}: {e}")
