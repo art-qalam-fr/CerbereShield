@@ -1,0 +1,44 @@
+# Configuration pour l'outil d'audit de sécurité
+# Copiez ce fichier vers config.yml et ajustez selon vos besoins
+
+# Ports autorisés (liste blanche)
+allowed_ports:
+  # Ports locaux de développement courants
+  - port: 8080
+    protocol: tcp
+    description: "Développement web local"
+  - port: 4050
+    protocol: tcp
+    description: "FastAPI/Uvicorn développement (Web Port Dashboard)"
+  - port: 3000
+    protocol: tcp
+    description: "React/Node.js développement"
+  - port: 5432
+    protocol: tcp
+    description: "PostgreSQL local"
+  - port: 6379
+    protocol: tcp
+    description: "Redis local"
+
+# Ports critiques à surveiller particulièrement
+critical_ports:
+  - 22    # SSH
+  - 80    # HTTP
+  - 443   # HTTPS
+  - 3389  # RDP
+  - 3306  # MySQL
+  - 5432  # PostgreSQL
+
+# Seuils de risque
+risk_thresholds:
+  max_exposed_ports: 3  # Nombre maximum de ports exposés sur 0.0.0.0
+  scan_detection_threshold: 5  # Nombre minimum de tentatives depuis une IP pour détecter un scan
+
+# Configuration du rapport
+report:
+  format: markdown  # markdown ou html
+  output_file: security_audit_report.md
+  include_details: true
+
+# Mode debug/verbose
+debug: false

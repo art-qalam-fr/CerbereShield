@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="fr" data-i18n-title="about.title" data-i18n-desc="about.mdesc">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Qui sommes-nous — Cerbere Security Shield</title>
+  <meta name="description" content="Pourquoi Cerbere Security Shield existe : un outil né d'un besoin personnel de visibilité réseau, distribué en open source pour tous." />
+  <link rel="icon" type="image/x-icon" href="assets/img/favicon.ico" />
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container">
+    <a class="brand" href="accueil.html">
+      <img src="assets/img/cerbere_logo.png" alt="Logo Cerbere Security Shield" />
+      Cerbere Security Shield <span class="beta-tag" data-i18n="beta.tag">Bêta</span>
+    </a>
+    <nav class="nav">
+      <a href="accueil.html" data-i18n="nav.home">Accueil</a>
+      <a href="qui-sommes-nous.html" class="active" data-i18n="nav.about">Qui sommes-nous</a>
+      <a href="avertissements.html" data-i18n="nav.warnings">Avertissements</a>
+      <a href="securite.html" data-i18n="nav.security">Sécurité &amp; confidentialité</a>
+      <a href="soutenir.html" data-i18n="nav.donate">Soutenir</a>
+      <a href="https://github.com/art-qalam-fr/CerbereShield" target="_blank" rel="noreferrer">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<div class="banderole">
+  <video autoplay muted loop playsinline preload="auto" poster="assets/img/cerbere_banner.png" aria-hidden="true">
+    <source src="assets/video/cerbere_banner_loop.mp4" type="video/mp4" />
+  </video>
+</div>
+
+<div class="page-title">
+  <div class="container">
+    <h1 data-i18n="about.h1">Qui sommes-nous</h1>
+    <p data-i18n="about.sub">L'histoire du projet, l'état d'esprit, et pourquoi l'open source</p>
+  </div>
+</div>
+
+<main class="doc">
+  <div class="doc-section">
+
+    <h2 data-i18n="about.s1">Un besoin personnel, devenu un outil public</h2>
+    <p data-i18n="about.s1p1">
+      Cerbere Security Shield n'est pas né d'un business plan, mais d'un besoin concret. Développeur autodidacte, j'utilise au quotidien des outils modernes — serveurs MCP, services locaux, agents de développement — qui ouvrent de nombreux ports sur ma machine. Il m'est vite apparu indispensable de pouvoir observer et contrôler moi-même ce qui entre et sort : quels ports écoutent, quelles requêtes DNS partent, quels processus communiquent.
+    </p>
+    <p data-i18n="about.s1p2">
+      Plutôt que d'empiler les utilitaires, j'ai construit l'outil que je cherchais — puis j'ai décidé de le rendre public, parce que ce besoin n'est pas le mien seulement.
+    </p>
+
+    <h2 data-i18n="about.s2">Ce qui le distingue</h2>
+    <p data-i18n="about.s2p1">
+      La plupart des bloqueurs fonctionnent en boîte noire : ils filtrent par défaut sans montrer ce qui passe réellement — et certains laissent volontairement des portes ouvertes à des partenaires qui les financent (publicité « acceptable », suivi déguisé). Cerbere fait le pari inverse : chaque requête DNS qui entre ou sort est <strong>visible, filtrable et documentée</strong>, de façon interactive, sans quitter l'application.
+    </p>
+    <p data-i18n="about.s2p2">
+      Vous voyez concrètement ce que fait Windows en arrière-plan — télémétrie, suivi commercial, appels inattendus — et vous reprenez la main dessus. Le contrôle n'est pas délégué : il vous revient.
+    </p>
+
+    <h2 data-i18n="about.s3">Honnêteté sur l'état du projet</h2>
+    <p data-i18n="about.s3p1">
+      Cerbere remplit ses fonctions au quotidien, mais ce n'est pas un produit fini : certaines zones — la détection d'intrusion notamment — sont encore en cours de durcissement. L'application est distribuée gratuitement, en l'état, sous licence MIT : la sécurité est l'affaire de tous, et l'auteur ne saurait être tenu responsable des failles qu'elle pourrait encore contenir.
+    </p>
+    <p data-i18n="about.s3p2">
+      Testez, auditez, remontez les bugs — chaque retour fait progresser la version.
+    </p>
+
+    <h2 data-i18n="about.s4">Pourquoi l'open source</h2>
+    <p data-i18n="about.s4p1">
+      Un outil de sécurité doit pouvoir être inspecté — c'est la moindre des choses pour un logiciel qui touche au réseau. Au-delà de la transparence, l'open source porte les valeurs du projet : partage, entraide, amélioration collective. Le code est public, auditable, et recompilable par quiconque veut vérifier ce qu'il installe.
+    </p>
+
+    <h2 data-i18n="about.s5">Contribuer, signaler, échanger</h2>
+    <p data-i18n="about.s5p1">
+      Le projet vit sur <a href="https://github.com/art-qalam-fr/CerbereShield" target="_blank" rel="noreferrer">GitHub</a>. Développeurs : votre aide est la bienvenue — corrections, fonctionnalités, revue de code. Testeurs : vos rapports de bugs sont précieux — soyez indulgents, ce projet est le travail d'une seule personne, pas d'une équipe.
+    </p>
+
+    <h2 data-i18n="about.s6">L'auteur</h2>
+    <p data-i18n="about.s6p1">
+      Ce site et ce logiciel servent aussi de vitrine : ils montrent concrètement ce qu'une seule personne peut construire de bout en bout — backend, interface, packaging, distribution multilingue. Si ce travail résonne avec vos projets, si vous cherchez un partenaire de développement ou un profil qui apprend vite et mène un produit complet, <a href="https://github.com/art-qalam-fr/CerbereShield" target="_blank" rel="noreferrer">contactez-moi via GitHub</a> — je suis ouvert aux collaborations comme aux opportunités professionnelles.
+    </p>
+
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <span data-i18n="footer.copy">© 2026 art-qalam-fr — Licence MIT · Cerbere Security Shield</span>
+    <nav>
+      <a href="accueil.html" data-i18n="nav.home">Accueil</a>
+      <a href="avertissements.html" data-i18n="nav.warnings">Avertissements</a>
+      <a href="securite.html" data-i18n="nav.security">Sécurité &amp; confidentialité</a>
+      <a href="soutenir.html" data-i18n="nav.donate">Soutenir</a>
+      <a href="https://github.com/art-qalam-fr/CerbereShield/releases" target="_blank" rel="noreferrer">Releases</a>
+    </nav>
+  </div>
+</footer>
+
+<script src="assets/js/i18n.js"></script>
+</body>
+</html>

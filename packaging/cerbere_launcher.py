@@ -1,0 +1,128 @@
+"""Point d'entrée de l'exécutable packagé Cerbere Security Shield.
+
+Lance le backend FastAPI/uvicorn sur localhost:4050 puis ouvre le
+navigateur par défaut sur le dashboard. En mode frozen (PyInstaller),
+stdout/stderr sont redirigés vers ``logs/launcher.log`` car il n'y a
+pas de console attachée.
+"""
+
+import subprocess
+import sys
+import threading
+import webbrowser
+from pathlib import Path
+
+
+def _start_systray() -> None:
+    """Lance WebPortSystray.exe s'il est installé à côté de l'exécutable.
+
+    En mode frozen l'exe vit dans ``%LOCALAPPDATA%\\Programs\\CerbereShield``
+    avec le systray à côté — équivalent du lancement fait par les .bat en dev.
+    Sans doublon : on ne relance pas si le systray tourne déjà.
+    """
+    try:
+        import psutil
+
+        for proc in psutil.process_iter(["name"]):
+            if (proc.info["name"] or "").lower() == "webportsystray.exe":
+                return
+    except Exception:
+        pass
+    systray = Path(sys.executable).resolve().parent / "WebPortSystray.exe"
+    if systray.exists():
+        subprocess.Popen(
+            [str(systray)],
+            creationflags=getattr(subprocess, "DETACHED_PROCESS", 0),
+        )
+
+
+def _launch_frontends(paths) -> None:
+    """Ouvre Browser, Desktop ou les deux selon config.ui.launch_mode."""
+    import yaml
+
+    mode = "browser"
+    try:
+        config_path = paths.config_file()
+        if config_path.exists():
+            config = yaml.safe_load(config_path.read_text(encoding="utf-8")) or {}
+            mode = str((config.get("ui") or {}).get("launch_mode") or "browser").lower()
+    except Exception as exc:
+        print(f"[Cerbere] Mode UI illisible, fallback browser: {exc}")
+
+    if mode not in {"browser", "desktop", "both"}:
+        mode = "browser"
+
+    desktop_candidates = [
+        Path(sys.executable).resolve().parent / "CerbereDesktop.exe",
+        Path(sys.executable).resolve().parent / "cerbere-shield-desktop.exe",
+        Path(__file__).resolve().parents[1] / "frontend_react" / "src-tauri" / "target" / "release" / "cerbere-shield-desktop.exe",
+    ]
+    desktop = next((candidate for candidate in desktop_candidates if candidate.exists()), None)
+    desktop_started = False
+
+    if mode in {"desktop", "both"} and desktop is not None:
+        subprocess.Popen(
+            [str(desktop)],
+            cwd=str(desktop.parent),
+            creationflags=getattr(subprocess, "DETACHED_PROCESS", 0),
+        )
+        desktop_started = True
+
+    if mode in {"browser", "both"} or not desktop_started:
+        threading.Timer(1.5, lambda: webbrowser.open("http://localhost:4050/")).start()
+
+
+def main() -> None:
+    import cerbere_paths as paths
+
+    # Pré-création des dossiers inscriptibles (%LOCALAPPDATA%\CerbereShield)
+    logs = paths.logs_dir()
+    paths.state_dir()
+
+    # En mode fenêtré (console=False) stdout/stderr peuvent être None :
+    # on redirige vers un fichier pour conserver la capacité de debug.
+    if paths.is_frozen():
+        try:
+            log_file = open(logs / "launcher.log", "a", encoding="utf-8", buffering=1)
+            sys.stdout = sys.stderr = log_file
+        except OSError:
+            pass
+
+    print("[Cerbere] Demarrage du backend sur http://localhost:4050 ...")
+    print(f"[Cerbere] frozen={paths.is_frozen()} data={paths.data_root()}")
+
+    import uvicorn
+    import web_port_dashboard.port_dashboard as dashboard
+
+    server = uvicorn.Server(
+        uvicorn.Config(dashboard.app, host="localhost", port=4050, reload=False)
+    )
+    # Référence partagée : permet l'arrêt propre via /api/shutdown
+    dashboard._uvicorn_server = server
+
+    def _launch_when_ready() -> None:
+        # Le port n'est pas encore ouvert : sans cette attente, le webview
+        # desktop (instantané) échoue sur tous les appels API/locales, et le
+        # navigateur tombe sur une page « connexion refusée ».
+        import time
+
+        deadline = time.time() + 30
+        while not server.started and time.time() < deadline:
+            time.sleep(0.1)
+        _launch_frontends(paths)
+        if paths.is_frozen():
+            _start_systray()
+
+    threading.Thread(target=_launch_when_ready, daemon=True).start()
+
+    try:
+        server.run()
+    except OSError as e:
+        # Port déjà occupé : une instance tourne probablement déjà —
+        # on ouvre quand même le navigateur vers le dashboard existant.
+        print(f"[Cerbere] Port 4050 indisponible ({e}) — ouverture du navigateur.")
+        webbrowser.open("http://localhost:4050/")
+
+
+if __name__ == "__main__":
+    main()

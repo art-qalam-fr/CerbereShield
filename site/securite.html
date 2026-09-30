@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="fr" data-i18n-title="sec.title" data-i18n-desc="sec.mdesc">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sécurité &amp; confidentialité — Cerbere Security Shield</title>
+  <meta name="description" content="Modèle de sécurité, politique de confidentialité et politique de signature du code de Cerbere Security Shield." />
+  <link rel="icon" type="image/x-icon" href="assets/img/favicon.ico" />
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container">
+    <a class="brand" href="accueil.html">
+      <img src="assets/img/cerbere_logo.png" alt="Logo Cerbere Security Shield" />
+      Cerbere Security Shield <span class="beta-tag" data-i18n="beta.tag">Bêta</span>
+    </a>
+    <nav class="nav">
+      <a href="accueil.html" data-i18n="nav.home">Accueil</a>
+      <a href="qui-sommes-nous.html" data-i18n="nav.about">Qui sommes-nous</a>
+      <a href="avertissements.html" data-i18n="nav.warnings">Avertissements</a>
+      <a href="securite.html" class="active" data-i18n="nav.security">Sécurité &amp; confidentialité</a>
+      <a href="soutenir.html" data-i18n="nav.donate">Soutenir</a>
+      <a href="https://github.com/art-qalam-fr/CerbereShield" target="_blank" rel="noreferrer">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<div class="banderole">
+  <video autoplay muted loop playsinline preload="auto" poster="assets/img/cerbere_banner.png" aria-hidden="true">
+    <source src="assets/video/cerbere_banner_loop.mp4" type="video/mp4" />
+  </video>
+</div>
+
+<div class="page-title">
+  <div class="container">
+    <h1 data-i18n="sec.h1">Sécurité &amp; confidentialité</h1>
+    <p data-i18n="sec.sub">Ce que fait Cerbere, ce qu'il ne fait pas, et comment les releases sont signées</p>
+  </div>
+</div>
+
+<main class="doc">
+  <div class="doc-section">
+
+    <h2 data-i18n="sec.model">Modèle de sécurité</h2>
+    <p data-i18n="sec.modelp">
+      Cerbere Security Shield est un logiciel <strong>entièrement local</strong>. Le backend écoute sur
+      <code>localhost:4050</code> et n'accepte que des origines locales (navigateur sur la machine,
+      application de bureau intégrée). Aucun port n'est exposé vers l'extérieur par l'application.
+    </p>
+    <ul>
+      <li data-i18n="sec.ml1"><strong>Verrou applicatif optionnel</strong> : session Windows ou mot de passe dédié (hash salé, jamais stocké en clair). Les actions de modification exigent une session déverrouillée.</li>
+      <li data-i18n="sec.ml2"><strong>Contrôle parental protégé par PIN</strong> indépendant du verrou principal.</li>
+      <li data-i18n="sec.ml3"><strong>Trafic externe limité au strict nécessaire</strong> : téléchargement des listes de blocage publiques (EasyList, AdGuard, OISD, HaGeZi) et requêtes d'empreintes vers MalwareBazaar (abuse.ch — gratuite, sans clé). Aucune autre API externe, aucune clé payante, aucun service tiers.</li>
+      <li data-i18n="sec.ml4">Les liens vers VirusTotal, ProcessLibrary, SpeedGuide ou SANS ISC sont de simples <strong>liens de navigation</strong> — aucune donnée ne leur est envoyée automatiquement.</li>
+    </ul>
+
+    <h2 data-i18n="sec.priv">Politique de confidentialité</h2>
+    <p data-i18n="sec.privp">
+      Cerbere Security Shield <strong>ne collecte aucune donnée personnelle</strong>. Concrètement :
+    </p>
+    <ul>
+      <li data-i18n="sec.pl1">Pas de télémétrie, pas d'analytics, pas de crash reporting vers un serveur externe.</li>
+      <li data-i18n="sec.pl2">Pas de compte utilisateur, pas d'inscription, pas de cookie de suivi.</li>
+      <li data-i18n="sec.pl3">Toutes les données (configuration, journaux, état de protection, listes) sont stockées localement sur votre machine.</li>
+      <li data-i18n="sec.pl4">Les seules requêtes sortantes concernent des ressources publiques : listes de blocage (téléchargement en lecture seule) et MalwareBazaar (envoi d'une empreinte de fichier pour analyse de réputation — jamais le fichier lui-même).</li>
+      <li data-i18n="sec.pl5">Le site web ne dépose aucun cookie et ne charge aucune ressource tierce.</li>
+    </ul>
+    <p data-i18n="sec.privq">
+      Pour toute question relative à la confidentialité : ouvrez un ticket sur
+      <a href="https://github.com/art-qalam-fr/CerbereShield/issues" target="_blank" rel="noreferrer">GitHub Issues</a>.
+    </p>
+
+    <h2 data-i18n="sec.sign">Politique de signature du code</h2>
+    <p data-i18n="sec.signp">
+      Les binaires officiels sont produits exclusivement par la chaîne CI/CD du dépôt public
+      <a href="https://github.com/art-qalam-fr/CerbereShield" target="_blank" rel="noreferrer">art-qalam-fr/CerbereShield</a>
+      (GitHub Actions) et signés via <strong>SignPath.io</strong>.
+    </p>
+    <ul>
+      <li data-i18n="sec.sl1">Chaque signature est soumise à une <strong>demande de signature dédiée par release</strong> — aucune signature automatique silencieuse.</li>
+      <li data-i18n="sec.sl2">Pendant la bêta, le certificat utilisé est un certificat de test auto-signé (<code>CN=Cerbere Security Shield, O=art-qalam-fr, OU=Open Source</code>). À la validation de notre candidature auprès de la <strong>SignPath Foundation</strong>, les releases seront signées avec un certificat de confiance public.</li>
+      <li data-i18n="sec.sl3">Vérification d'une signature : clic droit sur l'exe → <em>Propriétés → Signatures numériques</em>. Le nom du signataire doit correspondre au certificat officiel du projet.</li>
+      <li data-i18n="sec.sl4"><strong>Équipe</strong> : projet maintenu par l'organisation art-qalam-fr (auteur unique ; les rôles Auteur / Réviseur / Approbateur sont assumés par le maintainer, les demandes de signature sont revues manuellement).</li>
+    </ul>
+    <p data-i18n="sec.signnote">
+      <em>Code signing for this open-source project is provided by the
+      <a href="https://signpath.org" target="_blank" rel="noreferrer">SignPath Foundation</a> via
+      <a href="https://signpath.io" target="_blank" rel="noreferrer">SignPath.io</a>.</em>
+    </p>
+
+    <h2 data-i18n="sec.vuln">Signalement d'une vulnérabilité</h2>
+    <p data-i18n="sec.vulnp">
+      Vous avez identifié un problème de sécurité ? Merci de ne pas publier l'exploit publiquement
+      avant correction. Ouvrez un ticket sur
+      <a href="https://github.com/art-qalam-fr/CerbereShield/issues" target="_blank" rel="noreferrer">GitHub Issues</a>
+      avec le préfixe <code>[security]</code> — en précisant la version, la plateforme et les étapes de reproduction.
+    </p>
+
+    <h2 data-i18n="sec.transp">Transparence</h2>
+    <ul>
+      <li data-i18n="sec.tl1">Code source complet : <a href="https://github.com/art-qalam-fr/CerbereShield" target="_blank" rel="noreferrer">github.com/art-qalam-fr/CerbereShield</a> (licence MIT)</li>
+      <li data-i18n="sec.tl2">Historique des releases : <a href="https://github.com/art-qalam-fr/CerbereShield/releases" target="_blank" rel="noreferrer">Releases GitHub</a></li>
+      <li data-i18n="sec.tl3">L'application peut être recompilée depuis les sources pour vérification indépendante.</li>
+    </ul>
+
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <span data-i18n="footer.copy">© 2026 art-qalam-fr — Licence MIT · Cerbere Security Shield</span>
+    <nav>
+      <a href="accueil.html" data-i18n="nav.home">Accueil</a>
+      <a href="avertissements.html" data-i18n="nav.warnings">Avertissements</a>
+      <a href="soutenir.html" data-i18n="nav.donate">Soutenir</a>
+      <a href="https://github.com/art-qalam-fr/CerbereShield/releases" target="_blank" rel="noreferrer">Releases</a>
+    </nav>
+  </div>
+</footer>
+
+<script src="assets/js/i18n.js"></script>
+</body>
+</html>

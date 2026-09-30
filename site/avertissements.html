@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="fr" data-i18n-title="warn.title" data-i18n-desc="warn.mdesc">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Avertissements — Cerbere Security Shield</title>
+  <meta name="description" content="Avertissements d'installation et d'usage de la version bêta de Cerbere Security Shield : SmartScreen, droits administrateur, faux positifs antivirus." />
+  <link rel="icon" type="image/x-icon" href="assets/img/favicon.ico" />
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container">
+    <a class="brand" href="accueil.html">
+      <img src="assets/img/cerbere_logo.png" alt="Logo Cerbere Security Shield" />
+      Cerbere Security Shield <span class="beta-tag" data-i18n="beta.tag">Bêta</span>
+    </a>
+    <nav class="nav">
+      <a href="accueil.html" data-i18n="nav.home">Accueil</a>
+      <a href="qui-sommes-nous.html" data-i18n="nav.about">Qui sommes-nous</a>
+      <a href="avertissements.html" class="active" data-i18n="nav.warnings">Avertissements</a>
+      <a href="securite.html" data-i18n="nav.security">Sécurité &amp; confidentialité</a>
+      <a href="soutenir.html" data-i18n="nav.donate">Soutenir</a>
+      <a href="https://github.com/art-qalam-fr/CerbereShield" target="_blank" rel="noreferrer">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<div class="banderole">
+  <video autoplay muted loop playsinline preload="auto" poster="assets/img/cerbere_banner.png" aria-hidden="true">
+    <source src="assets/video/cerbere_banner_loop.mp4" type="video/mp4" />
+  </video>
+</div>
+
+<div class="page-title">
+  <div class="container">
+    <h1 data-i18n="warn.h1">Avertissements</h1>
+    <p data-i18n="warn.sub">À lire avant d'installer la version bêta</p>
+  </div>
+</div>
+
+<main class="doc">
+  <div class="doc-section">
+
+    <div class="notice" style="max-width:none; margin-bottom:2rem;" data-i18n="warn.beta">
+      <strong>Cerbere Security Shield est un logiciel en version bêta.</strong>
+      Il est proposé gratuitement pour test et évaluation. Il est fonctionnel et utilisé en conditions réelles par ses auteurs, mais n'a pas encore la maturité d'une version stable.
+    </div>
+
+    <h2 data-i18n="warn.s1">1. Avertissement Windows SmartScreen</h2>
+    <p data-i18n="warn.s1p1">
+      Pendant la phase bêta, les binaires sont signés avec un <strong>certificat de test</strong> (auto-signé via SignPath) en attendant la validation de notre demande de certificat de confiance auprès de la SignPath Foundation. Windows SmartScreen affichera donc probablement :
+    </p>
+    <ul>
+      <li data-i18n="warn.s1li1">« <em>Windows a protégé votre ordinateur</em> » ou « <em>Application non reconnue</em> »</li>
+      <li data-i18n="warn.s1li2">Pour continuer : <strong>Informations complémentaires → Exécuter quand même</strong></li>
+    </ul>
+    <p data-i18n="warn.s1p2">
+      Cet avertissement est attendu et ne signale pas un malware : il signifie seulement que le certificat de signature n'est pas encore reconnu par la réputation SmartScreen. Vous pouvez vérifier la signature des fichiers (clic droit → Propriétés → Signatures numériques) — le signataire doit être <code>CN=Cerbere Security Shield, O=art-qalam-fr</code>.
+    </p>
+
+    <h2 data-i18n="warn.s2">2. Configuration requise</h2>
+    <ul>
+      <li data-i18n="warn.s2li1"><strong>Windows 10 ou Windows 11</strong>, 64 bits uniquement — aucune version macOS ou Linux</li>
+      <li data-i18n="warn.s2li2"><strong>Droits administrateur</strong> nécessaires pour les fonctions pare-feu, le blocage DNS local et le service de détection d'intrusion</li>
+      <li data-i18n="warn.s2li3">Le port local <code>4050</code> doit être disponible (backend du tableau de bord)</li>
+      <li data-i18n="warn.s2li4">Une connexion Internet est requise uniquement pour télécharger les mises à jour des listes de blocage et les soumissions d'analyse MalwareBazaar</li>
+    </ul>
+
+    <h2 data-i18n="warn.s3">3. Impacts possibles sur le système</h2>
+    <ul>
+      <li data-i18n="warn.s3li1">Le <strong>filtrage DNS</strong> intercepte les requêtes DNS de la machine : certains sites peuvent être bloqués par les listes (faux positifs possibles). Une liste blanche permet de lever un blocage en un clic.</li>
+      <li data-i18n="warn.s3li2">Le <strong>durcissement pare-feu</strong> crée des règles dans le pare-feu Windows. Un plan de durcissement est toujours présenté <em>avant</em> application — relisez-le, certaines règles peuvent couper des usages légitimes (partage réseau, serveurs locaux, jeux en ligne).</li>
+      <li data-i18n="warn.s3li3">La <strong>détection d'intrusion</strong> peut bannir automatiquement des adresses IP ; les bannissements sont réversibles depuis l'onglet Détection d'intrusion.</li>
+      <li data-i18n="warn.s3li4">Le <strong>contrôle parental</strong> restreint l'accès à des catégories de sites pour le profil configuré — conservez le PIN en lieu sûr : il protège aussi la désactivation du filtrage.</li>
+    </ul>
+
+    <h2 data-i18n="warn.s4">4. Faux positifs antivirus</h2>
+    <p data-i18n="warn.s4p">
+      Comme tout logiciel de sécurité qui touche au pare-feu, au DNS et aux processus, Cerbere peut être signalé par certains antivirus — d'autant plus que les binaires ne sont pas encore signés avec un certificat de confiance. Le code source est entièrement public sur <a href="https://github.com/art-qalam-fr/CerbereShield" target="_blank" rel="noreferrer">GitHub</a> : vous pouvez l'auditer ou compiler l'application vous-même.
+    </p>
+
+    <h2 data-i18n="warn.s5">5. Limitation de responsabilité</h2>
+    <p data-i18n="warn.s5p">
+      Le logiciel est fourni « tel quel », sous licence MIT, sans garantie d'aucune sorte. Les auteurs ne peuvent être tenus responsables d'un dommage, d'une perte de données ou d'une interruption de service résultant de son utilisation — notamment des règles de pare-feu ou du filtrage DNS. En bêta, testez de préférence sur une machine non critique.
+    </p>
+    <p data-i18n="warn.bug">
+      Un bug ? Ouvrez un ticket sur <a href="https://github.com/art-qalam-fr/CerbereShield/issues" target="_blank" rel="noreferrer">GitHub Issues</a>.
+    </p>
+
+    <div class="notice blue" style="max-width:none;" data-i18n="warn.summary">
+      <strong>Sommaire.</strong> Bêta = avertissement SmartScreen attendu + droits admin requis + fonctionnalités qui touchent au réseau. Si vous n'êtes pas à l'aise avec ça, attendez la version stable — ou lisez la page <a href="securite.html">Sécurité &amp; confidentialité</a> pour comprendre exactement ce que fait (et ne fait pas) l'application.
+    </div>
+
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <span data-i18n="footer.copy">© 2026 art-qalam-fr — Licence MIT · Cerbere Security Shield</span>
+    <nav>
+      <a href="accueil.html" data-i18n="nav.home">Accueil</a>
+      <a href="securite.html" data-i18n="nav.security">Sécurité &amp; confidentialité</a>
+      <a href="soutenir.html" data-i18n="nav.donate">Soutenir</a>
+      <a href="https://github.com/art-qalam-fr/CerbereShield/releases" target="_blank" rel="noreferrer">Releases</a>
+    </nav>
+  </div>
+</footer>
+
+<script src="assets/js/i18n.js"></script>
+</body>
+</html>

@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cerbere Security Shield</title>
+  <link rel="icon" type="image/x-icon" href="assets/img/favicon.ico" />
+  <style>
+    html, body {
+      margin: 0; height: 100%;
+      background: #0b1220;
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    }
+    body { display: flex; align-items: center; justify-content: center; overflow: hidden; }
+
+    .splash { text-align: center; cursor: pointer; animation: pageIn 0.55s ease forwards; }
+    .splash .frame {
+      position: relative; overflow: hidden;
+      height: min(64vh, 680px, 164vw); aspect-ratio: 9 / 16;
+      margin: 0 auto;
+      opacity: 0; transform: scale(0.55);
+      -webkit-mask-image:
+        linear-gradient(to right,  transparent 0, #000 9%,  #000 91%, transparent 100%),
+        linear-gradient(to bottom, transparent 0, #000 7%,  #000 93%, transparent 100%);
+      -webkit-mask-composite: source-in;
+      mask-image:
+        linear-gradient(to right,  transparent 0, #000 9%,  #000 91%, transparent 100%),
+        linear-gradient(to bottom, transparent 0, #000 7%,  #000 93%, transparent 100%);
+      mask-composite: intersect;
+      animation: logoIn 1.15s cubic-bezier(0.2, 0.8, 0.25, 1) 0.15s forwards;
+    }
+    .splash .frame video {
+      position: absolute; left: 50%; top: 50%;
+      height: 112%; width: auto;
+      transform: translate(-50%, -50%);
+    }
+    .splash .name {
+      margin-top: 1.6rem; color: #f8fafc;
+      font-size: clamp(1.1rem, 3vw, 1.6rem); font-weight: 600; letter-spacing: 0.06em;
+      opacity: 0;
+      animation: fadeUp 0.8s ease 0.9s forwards;
+    }
+    .splash .tag {
+      margin-top: 0.4rem; color: #64748b; font-size: 0.85rem; letter-spacing: 0.22em;
+      text-transform: uppercase; opacity: 0;
+      animation: fadeUp 0.8s ease 1.15s forwards;
+    }
+    .splash .enter {
+      margin-top: 2.4rem; color: #94a3b8; font-size: 0.8rem; letter-spacing: 0.14em;
+      text-transform: uppercase; opacity: 0;
+      animation: fadeUp 0.8s ease 1.6s forwards, pulse 2.4s ease-in-out 2.6s infinite;
+    }
+    .splash.fade-out { animation: splashOut 0.55s ease forwards; }
+
+    @keyframes pageIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes logoIn {
+      to { opacity: 1; transform: scale(1); }
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes splashOut {
+      to { opacity: 0; transform: scale(1.08); }
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 0.55; }
+      50% { opacity: 1; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .splash, .splash .frame, .splash .name, .splash .tag, .splash .enter { animation-duration: 0.01s; animation-delay: 0s; animation-iteration-count: 1; }
+      .splash .enter { opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+  <a class="splash" id="splash" href="accueil.html" aria-label="Entrer sur le site">
+    <div class="frame">
+      <video id="splashVideo" autoplay loop playsinline preload="auto" poster="assets/img/cerbere_logo.png" aria-label="Cerbere Security Shield">
+        <source src="assets/video/cerbere_intro_1080.mp4" type="video/mp4" />
+      </video>
+    </div>
+    <div class="name">CERBERE SECURITY SHIELD</div>
+    <div class="tag" data-i18n="splash.tag">Protection réseau locale</div>
+    <div class="enter" data-i18n="splash.enter">Cliquer pour entrer</div>
+  </a>
+
+  <script src="assets/js/i18n.js"></script>
+  <script>
+    // Pas de temporisation : c'est le visiteur qui déclenche la transition
+    // vers la page d'accueil en cliquant.
+    const FADE_MS = 550;
+    const splash = document.getElementById('splash');
+    const video = document.getElementById('splashVideo');
+    // On tente la lecture avec son ; si le navigateur la refuse
+    // (autoplay policy), on retombe en muet pour que la vidéo joue.
+    video.muted = false;
+    const playPromise = video.play();
+    if (playPromise !== undefined) {
+      playPromise.catch(() => { video.muted = true; video.play(); });
+    }
+    // Un clic sur la vidéo = activer le son et relire l'intro.
+    // Un clic ailleurs = entrer sur le site.
+    video.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      video.muted = false;
+      video.currentTime = 0;
+      video.play();
+    });
+    let gone = false;
+    function go() {
+      if (gone) return;
+      gone = true;
+      splash.classList.add('fade-out');
+      setTimeout(() => { window.location.href = 'accueil.html'; }, FADE_MS);
+    }
+    splash.addEventListener('click', (e) => {
+      e.preventDefault();
+      go();
+    });
+  </script>
+</body>
+</html>

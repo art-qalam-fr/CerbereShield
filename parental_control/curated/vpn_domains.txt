@@ -1,0 +1,135 @@
+# ============================================================================
+# vpn_domains.txt — Liste curée de domaines de fournisseurs VPN grand public
+# ============================================================================
+# Projet : Cerbere Security Shield — module parental_control (contrôle domestique)
+#
+# But : empêcher le téléchargement, l'inscription et la configuration d'un VPN
+#       grand public utilisable pour contourner le filtrage DNS local — le
+#       tunnel VPN chiffre et déporte la résolution DNS chez le fournisseur.
+#
+# Provenance : liste curée MANUELLEMENT pour le projet, domaines vérifiés sur
+#              les sites officiels des fournisseurs VPN et leurs documentations
+#              (recherche web). AUCUNE liste externe n'est importée — pas de
+#              licence tierce, contenu 100 % projet, versionné dans le dépôt.
+# Dernière mise à jour : 2026-09-21
+#
+# ⚠ LIMITATION — bloquer le DOMAINE d'un VPN ne bloque PAS un client VPN
+#   déjà installé : une fois le tunnel établi, le trafic (dont le DNS) passe
+#   dans le tunnel chiffré vers des IP de serveurs, sans toucher ces domaines.
+#   Cette liste empêche l'acquisition/initiation, pas un tunnel existant.
+#
+# ⚠ RAPPEL — le blocage DNS est BINAIRE :
+#   chaque entrée bloque le domaine ET tous ses sous-domaines (matching par
+#   suffixe). Ex. proton.me bloque aussi mail.proton.me (Proton Mail).
+#
+# Format : un domaine par ligne (minuscules, sans schéma ni chemin).
+#          Lignes vides et commentaires (#) ignorés par le chargeur.
+# ============================================================================
+
+
+# ----------------------------------------------------------------------------
+# 1. VPN GRAND PUBLIC MAJEURS
+# ----------------------------------------------------------------------------
+nordvpn.com               # NordVPN — couvre downloads., api., meshnet.nordvpn.com
+nordcdn.com               # CDN/assets Nord Security
+expressvpn.com            # ExpressVPN
+protonvpn.com             # Proton VPN
+proton.me                 # Proton (VPN + Mail + Drive — tout le domaine bloqué)
+protonvpn.ch              # domaine historique Proton VPN
+surfshark.com             # Surfshark
+cyberghostvpn.com         # CyberGhost
+cgvpn.info                # domaine d'infrastructure VPN de CyberGhost
+privateinternetaccess.com # Private Internet Access (PIA)
+mullvad.net               # Mullvad — couvre api./mullvad.net et l'app
+windscribe.com            # Windscribe
+tunnelbear.com            # TunnelBear
+vyprvpn.com               # VyprVPN
+goldenfrog.com            # Golden Frog — éditeur et infra de VyprVPN
+ipvanish.com              # IPVanish
+purevpn.com               # PureVPN
+hide.me                   # hide.me VPN
+privadovpn.com            # PrivadoVPN (offre gratuite — appréciée des mineurs)
+hotbotvpn.com             # HotBot VPN
+hotspotshield.com         # Hotspot Shield (Aura/Pango)
+strongvpn.com             # StrongVPN
+torguard.net              # TorGuard
+ivpn.net                  # IVPN
+airvpn.org                # AirVPN
+ovpn.com                  # OVPN (SE)
+
+
+# ----------------------------------------------------------------------------
+# 2. VPN FREEMIUM / GRATUITS ET EXTENSIONS NAVIGATEUR
+# ----------------------------------------------------------------------------
+# Services gratuits ou freemium — vecteur privilégié pour un mineur sans CB.
+urbanvpn.com              # Urban VPN (gratuit, P2P)
+hola.org                  # Hola VPN (gratuit, P2P — très populaire)
+browsec.com               # Browsec — extension Chrome/Firefox
+touchvpn.net              # Touch VPN
+setupvpn.com              # SetupVPN — extension navigateur
+betternet.co              # Betternet
+veepn.com                 # VeePN
+vpnhub.com                # VPNhub
+seed4.me                  # Seed4.Me
+vpnbook.com               # VPNBook (identifiants gratuits publiés)
+freevpnplanet.com         # Planet VPN
+vpnunlimitedapp.com       # VPN Unlimited (KeepSolid)
+keepsolid.com             # KeepSolid — éditeur de VPN Unlimited
+trust.zone                # Trust.Zone
+astrill.com               # Astrill — très utilisé pour contourner la censure
+cactusvpn.com             # CactusVPN
+vpnsecure.me              # VPNSecure
+vpn.ac                    # VPN.ac
+cryptostorm.is            # cryptostorm
+perfect-privacy.com       # Perfect Privacy
+f-secure.com              # F-Secure (ex-Freedome VPN) — bloque aussi l'antivirus
+atlasvpn.com              # Atlas VPN — service arrêté (2024, fusion Nord), par prudence
+zenmate.com               # ZenMate — arrêté (2023, fusion CyberGhost), par prudence
+ivacy.com                 # Ivacy — fusionné dans PureVPN, par prudence
+safervpn.com              # SaferVPN — arrêté (fusion StrongVPN), par prudence
+
+
+# ----------------------------------------------------------------------------
+# 3. PROTOCOLES, CLIENTS ET RÉSEAUX MESH/SD-WAN
+# ----------------------------------------------------------------------------
+openvpn.net               # OpenVPN Inc. — client Connect + CloudConnexa
+openvpn.org               # OpenVPN communautaire (code + binaires)
+wireguard.com             # WireGuard — site officiel du protocole
+cloudconnexa.com          # CloudConnexa (OpenVPN Cloud)
+tailscale.com             # Tailscale — mesh VPN WireGuard, sortie via exit node
+zerotier.com              # ZeroTier — réseau overlay
+softether.org             # SoftEther VPN — protocole derrière VPN Gate
+cloudflareclient.com      # Cloudflare WARP (1.1.1.1) — VPN grand public Cloudflare
+speedify.com              # Speedify — VPN bonding
+vpn.mozilla.org           # Mozilla VPN (back-end Mullvad) — mozilla.org reste libre
+
+
+# ----------------------------------------------------------------------------
+# 4. OUTILS DE CONTournement (proxies/VPN-like) — contournement de censure
+# ----------------------------------------------------------------------------
+# Pas des « VPN » au sens strict, mais utilisés exactement pour le même but :
+# sortir du DNS/réseau local filtré.
+psiphon.ca                # Psiphon — outil de contournement de censure
+getlantern.org            # Lantern
+ultrasurf.us              # UltraSurf — proxy de contournement
+torproject.org            # Tor Project — bloque le téléchargement, pas l'usage
+getoutline.org            # Outline (Jigsaw) — serveur VPN Shadowsocks auto-hébergé
+shadowsocks.org           # Shadowsocks — protocole proxy de contournement
+v2ray.com                 # V2Ray
+v2fly.org                 # V2Fly (fork V2Ray)
+vpngate.net               # VPN Gate — relais VPN volontaires (univ. Tsukuba)
+
+
+# ----------------------------------------------------------------------------
+# CAS PARTICULIERS DOCUMENTÉS
+# ----------------------------------------------------------------------------
+# - VPN intégrés aux antivirus (Norton, Kaspersky, Avast/AVG, McAfee,
+#   Bitdefender) NON listés : bloquer le domaine de l'éditeur casserait les
+#   mises à jour de l'antivirus — à traiter au cas par cas par sous-domaine.
+# - tailscale.com / zerotier.com : la sortie Internet n'existe que si un
+#   « exit node » est configuré — bloqués car la mise en place se fait via
+#   le domaine (coordination/login tailscale.com).
+# - torproject.org : Tor n'utilise pas le DNS local, mais le téléchargement
+#   du navigateur passe par le domaine — d'où sa présence ici.
+# - Les domaines d'infrastructure (cgvpn.info, goldenfrog.com, nordcdn.com)
+#   bloquent aussi les appels API des clients → perturbent l'activation.
