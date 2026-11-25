@@ -1,0 +1,55 @@
+CERBERE SECURITY SHIELD PROPRIETARY SOURCE-AVAILABLE TERMS
+Version 1.0 — 25 November 2026
+
+Copyright (c) 2026 Michel Chevalier. All rights reserved in the original
+contributions controlled by the rights holder.
+
+1. Scope and reserved rights
+These terms apply to the original Cerbere Security Shield source code,
+scripts, documentation, original assets, and original portions of compiled
+artifacts in this publication, only to the extent the rights holder owns or
+is authorized to license them. Public availability is not an open-source
+license and does not grant permission to use the protected contributions.
+
+2. Prior written permission required
+Except for the limited permissions below, mandatory legal rights, or an
+independently valid license, no permission is granted to build, install,
+execute, use, modify, adapt, reproduce, distribute, sublicense, sell, host,
+or provide the protected contributions as a service. This applies to both
+commercial and non-commercial activities, including internal business use.
+Prior written authorization from the rights holder is required.
+
+3. Commercial agreements and royalties
+Authorization, permitted scope, duration, fees, and any royalties must be
+established in a separate written agreement with the rights holder.
+No price, royalty rate, automatic license, or payment obligation is created
+by these public terms. Payment alone does not constitute authorization.
+For licensing inquiries, contact the repository owner through GitHub:
+https://github.com/lascard-m
+
+4. Public inspection and hosting platform permissions
+Reading and reviewing the published source for inspection is permitted.
+The limited rights necessarily granted under the applicable hosting
+platform terms, including GitHub's viewing and on-platform fork rights,
+are not restricted by these terms. Such rights do not grant a general
+license to run, exploit, or redistribute the protected contributions.
+
+5. Third-party software and earlier grants
+Third-party code, dependencies, and incorporated upstream portions remain
+subject to their own licenses and notices; no ownership or exclusive rights
+are claimed over them. These terms do not narrow or revoke rights already
+validly granted under an earlier license, nor statutory rights.
+Deletion, recreation, relocation, or renaming of a repository does not revoke
+such grants. These terms apply only to rights the holder can lawfully reserve.
+Existing third-party notices must be retained when their licenses require it.
+
+6. No additional grants
+No patent, trademark, endorsement, support, or other rights are granted
+except as expressly agreed in writing or required by applicable law.
+
+7. Disclaimer
+To the extent permitted by applicable law, the protected contributions are
+provided AS IS, without warranties, including merchantability, fitness for a
+particular purpose, or non-infringement. To that same extent, the rights holder
+is not liable for damages arising from them. Mandatory legal protections
+are not excluded.

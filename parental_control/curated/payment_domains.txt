@@ -1,0 +1,219 @@
+# ============================================================================
+# payment_domains.txt — Liste curée de domaines de paiement en ligne
+# ============================================================================
+# Projet : Cerbere Security Shield — module parental_control (contrôle domestique)
+#
+# But : empêcher qu'un enfant (ou un logiciel indésirable) utilise la carte
+#       bancaire des parents en ligne — processeurs de paiement, pages 3-D
+#       Secure, banques, néobanques, crédit/BNPL et cartes prépayées.
+#
+# Provenance : liste curée MANUELLEMENT pour le projet, domaines vérifiés sur
+#              les documentations officielles des PSP/banques (recherche web).
+#              AUCUNE liste externe n'est importée — pas de licence tierce,
+#              contenu 100 % projet, versionné dans le dépôt.
+# Dernière mise à jour : 2026-09-21
+#
+# ⚠ RAPPEL — le blocage DNS est BINAIRE :
+#   chaque entrée bloque le domaine ET tous ses sous-domaines (matching par
+#   suffixe). « Consulter sans payer » est impossible : ex. paypal.com bloque
+#   aussi bien le site d'information que la page de paiement.
+#
+# Format : un domaine par ligne (minuscules, sans schéma ni chemin).
+#          Lignes vides et commentaires (#) ignorés par le chargeur.
+# ============================================================================
+
+
+# ----------------------------------------------------------------------------
+# 1. PROCESSEURS DE PAIEMENT (PSP) ET TPE VIRTUELS
+# ----------------------------------------------------------------------------
+
+# --- PSP internationaux ---
+stripe.com                # checkout.stripe.com, js.stripe.com, api.stripe.com…
+stripe.network
+stripecdn.com
+paypal.com                # couvre www.paypal.com, checkout.paypal.com…
+paypal.fr
+paypal.me                 # liens de paiement directs
+paypalobjects.com         # assets + SDK hébergés
+braintreegateway.com      # Braintree (groupe PayPal)
+braintree-api.com
+venmo.com                 # PayPal group (US)
+adyen.com                 # couvre checkoutshopper-live.adyen.com
+checkout.com
+worldpay.com
+squareup.com              # Square (paiement)
+square.com
+sumup.com
+zettle.com                # Zettle by PayPal
+mollie.com
+mangopay.com              # PSP marketplaces
+lemonway.com              # PSP marketplaces (FR)
+hipay.com
+gocardless.com            # prélèvements SEPA
+slimpay.com               # prélèvements SEPA (FR)
+2checkout.com             # Verifone
+alipay.com
+skrill.com                # e-wallet (groupe Paysafe)
+neteller.com              # e-wallet (groupe Paysafe)
+cash.app                  # Cash App / Block
+
+# --- PSP / TPE français et européens ---
+sips-services.com         # Worldline Sips (payment-webinit.sips-services.com)
+worldline.com
+worldline-solutions.com
+atosline.com              # legacy Atos/Sips
+monetico-services.com     # Monetico (p.monetico-services.com/paiement.cgi)
+monetico-paiement.fr
+monetico.com
+e-i.com                   # Euro-Information (payment-api.e-i.com) — CM/CIC
+payzen.eu                 # PayZen / Lyra Collect
+lyra.com                  # api.lyra.com, secure.lyra.com, static.lyra.com
+lyra-network.com
+cyberpluspaiement.com     # Banque Populaire / Caisse d'Épargne (SystemPay)
+systempay.fr              # legacy SystemPay
+payplug.com
+monext.fr                 # Payline / Monext Online
+payline.com
+dalenys.com
+centralpay.eu
+ingenico.com              # Ingenico ePayments
+ogone.com                 # Ogone (racheté par Ingenico)
+globalcollect.com         # legacy GlobalCollect (Ingenico ePayments)
+
+
+# ----------------------------------------------------------------------------
+# 2. 3-D SECURE / AUTHENTIFICATION BANCAIRE / RÉSEAUX DE CARTES
+# ----------------------------------------------------------------------------
+# ACS (Access Control Server) : l'acheteur est redirigé vers ces domaines
+# pendant l'authentification 3DS — les bloquer casse le paiement même si le
+# PSP n'est pas dans la liste.
+cardinalcommerce.com      # Cardinal (Visa Secure)
+arcot.com                 # Arcot/Broadcom — ACS utilisé par de nombreuses banques
+securesuite.net           # Mastercard Identity Check / SecureCode
+modirum.com               # Modirum 3DS
+netcetera.com             # Netcetera 3DS ACS (banques EU)
+
+# Réseaux de cartes (portails + endpoints scheme)
+visa.com
+mastercard.com
+americanexpress.com
+cartes-bancaires.com      # CB
+
+
+# ----------------------------------------------------------------------------
+# 3. BANQUES FRANÇAISES (banque en ligne + paiement)
+# ----------------------------------------------------------------------------
+banquepopulaire.fr
+caisse-epargne.fr
+credit-agricole.fr
+ca.fr                     # domaine court Crédit Agricole
+ca-fr.net                 # services en ligne Crédit Agricole
+# NOTE : les caisses régionales CA utilisent aussi ca-<region>.fr
+#        (ca-paris.fr, ca-toulouse31.fr…) — à ajouter au cas par cas.
+bnpparibas                # TLD de marque BNP (mabanque.bnpparibas)
+bnpparibas.net            # Mercanet : mercanet.bnpparibas.net ; Axepta : axepta.bnpparibas
+bnpparibas.com
+bnp-paribas.net
+societegenerale.fr
+societegenerale.com
+societegenerale.eu        # Sogecommerce
+sg.fr                     # particuliers.sg.fr — banque à distance SG
+labanquepostale.fr
+lcl.fr
+hsbc.fr
+creditmutuel.fr
+creditmutuel.com
+cic.fr
+boursobank.com            # ex-Boursorama Banque
+boursorama.com
+boursorama.fr
+fortuneo.fr
+hellobank.fr              # Hello bank! (BNP)
+axabanque.fr
+floabank.fr               # FLOA Bank (ex-Banque Casino / Cdiscount Pay)
+carrefour-banque.fr
+
+
+# ----------------------------------------------------------------------------
+# 4. NÉOBANQUES, COMPTES DE PAIEMENT ET WALLETS EUROPÉENS
+# ----------------------------------------------------------------------------
+revolut.com
+n26.com
+wise.com
+bunq.com
+nickel.eu                 # Compte Nickel
+orangebank.fr
+bforbank.com
+monabanq.com
+lydia-app.com             # Lydia
+lydia.me
+sumeria.eu                # Sumeria (nouveau nom de Lydia)
+paylib.fr                 # Paylib (arrêt 2025, conservé par prudence)
+wero.eu                   # Wero (EPI) — remplaçant de Paylib
+pcsmastercard.com         # cartes prépayées PCS
+transcash.fr              # cartes prépayées Transcash
+
+
+# ----------------------------------------------------------------------------
+# 5. CRÉDIT CONSOMMATEUR / PAIEMENT FRACTIONNÉ (BNPL)
+# ----------------------------------------------------------------------------
+klarna.com
+klarna.net
+klarnacdn.net             # SDK web Klarna
+almapay.com               # Alma (paiement en plusieurs fois)
+getalma.eu                # dashboard/checkout Alma
+scalapay.com
+oney.com                  # Oney (3x/4x — La Banque Postale/BPCE)
+oney.fr
+cofidis.fr
+cetelem.fr                # Cetelem / Aurore (BNP)
+franfinance.fr            # Franfinance (SG)
+sofinco.fr                # Sofinco (CA)
+younited.com              # Younited Credit
+younited-credit.com
+
+
+# ----------------------------------------------------------------------------
+# 6. CARTES PRÉPAYÉES / VOUCHERS (circuit connu des mineurs)
+# ----------------------------------------------------------------------------
+paysafecard.com           # codes Paysafecard
+neosurf.com               # tickets Neosurf
+cashlib.eu                # vouchers CASHlib
+flexepin.com              # vouchers Flexepin
+
+
+# ----------------------------------------------------------------------------
+# 7. PORTEFEUILLES / PAIEMENTS INTÉGRÉS (X-Pay, app stores)
+# ----------------------------------------------------------------------------
+pay.amazon.com            # Amazon Pay (sous-domaine : amazon.com reste accessible)
+pay.google.com            # Google Pay / facturation Play Store
+payments.google.com
+applepay.com
+apple-pay.apple.com
+apple-pay-gateway.apple.com       # validation marchand Apple Pay on the Web
+applepay.cdn-apple.com            # Apple Pay JS
+# NOTE : les pods Apple Pay (apple-pay-gateway-pr-podN.apple.com) ne sont pas
+#        capturés par le matching suffixe ; couverture totale = bloquer apple.com.
+samsungpay.com
+pay.samsung.com
+
+
+# ----------------------------------------------------------------------------
+# 8. ABONNEMENTS, DONS ET FACTURATION RÉCURRENTES
+# ----------------------------------------------------------------------------
+# Plateformes où la saisie CB se fait sur le domaine du site lui-même.
+patreon.com
+ko-fi.com
+buymeacoffee.com
+tipeee.com                # Tipeee (FR)
+utip.io                   # uTip (FR)
+gumroad.com
+substack.com
+
+# Infrastructures de facturation d'abonnements (pages de checkout hébergées)
+paddle.com
+paddle.net
+fastspring.com
+chargebee.com
+recurly.com
+zuora.com

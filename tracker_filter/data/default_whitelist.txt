@@ -1,0 +1,125 @@
+# ==============================================================================
+# Whitelist par défaut de domaines d'infrastructure connus (T35)
+# Permet d'éviter les faux blocages DNS pour les services essentiels.
+# Format : un nom de domaine par ligne, commentaires '#' et lignes vides ignorés.
+# ==============================================================================
+
+# Google & Alphabet
+google.com
+googleapis.com
+gstatic.com
+googleusercontent.com
+googlevideo.com
+youtube.com
+ytimg.com
+ggpht.com
+android.com
+
+# Microsoft & Windows
+microsoft.com
+live.com
+windows.com
+windowsupdate.com
+office.com
+office365.com
+outlook.com
+msn.com
+bing.com
+azure.com
+microsoftonline.com
+msftncsi.com
+xbox.com
+xboxlive.com
+
+# GitHub
+github.com
+githubusercontent.com
+githubassets.com
+github.io
+githubapp.com
+
+# X / Twitter
+x.com
+twitter.com
+twimg.com
+t.co
+
+# Meta
+facebook.com
+fbcdn.net
+instagram.com
+whatsapp.com
+whatsapp.net
+messenger.com
+
+# CDN & Infrastructure Web
+cloudflare.com
+jsdelivr.net
+unpkg.com
+cdnjs.com
+amazonaws.com
+cloudfront.net
+akamaihd.net
+fastly.net
+
+# Développement & Packages
+npmjs.org
+npmjs.com
+pypi.org
+pythonhosted.org
+docker.io
+docker.com
+
+# Systèmes d'exploitation & Fondations Open Source
+ubuntu.com
+debian.org
+
+# Apple
+apple.com
+icloud.com
+mzstatic.com
+itunes.com
+
+# Mozilla
+mozilla.com
+mozilla.org
+firefox.com
+
+# Wikimedia & Savoir
+wikipedia.org
+wikimedia.org
+
+# Médias & Communautés
+reddit.com
+redditstatic.com
+discord.com
+discordapp.com
+discord.gg
+spotify.com
+scdn.co
+netflix.com
+nflxvideo.net
+linkedin.com
+licdn.com
+
+# IA & Modèles
+openai.com
+chatgpt.com
+anthropic.com
+claude.ai
+mistral.ai
+ollama.com
+huggingface.co
+hf.co
+
+# Messagerie & Communication
+telegram.org
+t.me
+
+# Paiements & Finance
+stripe.com
+paypal.com
+
+# Logiciels & Matériel
+adobe.com
+nvidia.com

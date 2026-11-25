@@ -1,0 +1,138 @@
+# ============================================================================
+# doh_bypass.txt — Liste curée de résolveurs DNS-over-HTTPS (DoH) publics
+# ============================================================================
+# Projet : Cerbere Security Shield — module parental_control (contrôle domestique)
+#
+# But : empêcher qu'un navigateur (Firefox, Chrome, Edge…) ou une application
+#       contourne le filtrage DNS local en interrogeant un résolveur DoH
+#       public (RFC 8484) — les requêtes passent en HTTPS/443 et échappent au
+#       DNS filtrant de la box / du Shield.
+#
+# Provenance : liste curée MANUELLEMENT pour le projet, hostnames vérifiés sur
+#              les listes publiques de résolveurs DoH (wiki curl
+#              « DNS over HTTPS », flo-wer/doh-list) et les documentations
+#              officielles des fournisseurs (Google, Cloudflare, Quad9,
+#              OpenDNS, NextDNS, AdGuard, Mullvad, dns.sb…).
+#              AUCUNE liste externe n'est importée — pas de licence tierce,
+#              contenu 100 % projet, versionné dans le dépôt.
+# Dernière mise à jour : 2026-09-21
+#
+# ⚠ LIMITATION — bloquer ces domaines LIMITE le contournement DoH sans
+#   l'ÉLIMINER : un résolveur DoH auto-hébergé, joignable directement par IP
+#   littérale (https://1.1.1.1/dns-query), ou relayé via un CDN / fonction
+#   serverless reste possible ; DoT (853) et DoQ (QUIC) empruntent d'autres
+#   canaux non couverts par cette liste de domaines.
+#
+# ⚠ RAPPEL — le blocage DNS est BINAIRE :
+#   chaque entrée bloque le domaine ET tous ses sous-domaines (matching par
+#   suffixe).
+#
+# Format : un domaine par ligne (minuscules, sans schéma ni chemin).
+#          Lignes vides et commentaires (#) ignorés par le chargeur.
+# ============================================================================
+
+
+# ----------------------------------------------------------------------------
+# 1. RÉSOLVEURS RÉFÉRENCÉS DANS LES NAVIGATEURS (listes TRR Firefox/Chrome)
+# ----------------------------------------------------------------------------
+# Vecteur principal de contournement : ces résolveurs sont proposés nativement
+# dans les réglages « DNS sécurisé » des navigateurs.
+
+# --- Cloudflare (1.1.1.1) ---
+cloudflare-dns.com        # couvre mozilla./security./family./dns64./chrome./azure./opera.…
+one.one.one.one           # hostname DoH alternatif du service 1.1.1.1
+
+# --- Google Public DNS ---
+dns.google                # couvre dns64.dns.google — RFC 8484 + API JSON /resolve
+dns.google.com            # hostname historique, encore résolu
+8888.google               # alias DoH documenté par Google
+
+# --- Quad9 (9.9.9.x) ---
+dns.quad9.net             # 9.9.9.9 — filtrage malware (alias : dns9)
+dns9.quad9.net
+dns10.quad9.net           # 9.9.9.10 — sans filtrage de menaces
+dns11.quad9.net           # 9.9.9.11 — malware + ECS
+dns12.quad9.net           # 9.9.9.12 — sans filtrage + ECS
+
+# --- Cisco OpenDNS / Umbrella ---
+doh.opendns.com
+doh.familyshield.opendns.com
+doh.umbrella.com          # Cisco Umbrella (entreprise)
+
+# --- Autres résolveurs des listes navigateurs ---
+nextdns.io                # couvre dns./dns1./dns2./trr.dns.nextdns.io + API/dashboard
+adguard-dns.com           # couvre dns./family./unfiltered.adguard-dns.com
+dns.adguard.com           # ancien hostname AdGuard, encore résolu
+dns.mullvad.net           # couvre adblock./base./extended./family./all.dns.mullvad.net
+cleanbrowsing.org         # doh.cleanbrowsing.org/doh/<filtre>/ — filtre choisi par chemin
+dns.switch.ch             # SWITCH (CH) — liste Chrome
+canadianshield.cira.ca    # CIRA Canadian Shield (private./protected./family.)
+doh.xfinity.com           # Comcast — liste Firefox TRR
+dot.xfinity.com           # sert aussi le DoH malgré le préfixe « dot »
+doh-01.spectrum.com       # Charter / Spectrum
+doh-02.spectrum.com
+joindns4.eu               # DNS4EU (protective./child./noads./unfiltered.joindns4.eu)
+dns.surfsharkdns.com      # résolveur public de Surfshark
+dns.telekom.de            # Telekom Deutschland
+
+
+# ----------------------------------------------------------------------------
+# 2. DNS.SB ET RÉSOLVEURS ASIATIQUES TRÈS UTILISÉS
+# ----------------------------------------------------------------------------
+dns.sb                    # couvre doh.dns.sb, public-dns-a./public-dns-b.dns.sb
+doh.sb                    # couvre tous les PoP *.doh.sb (de-fra., us-nyc., sg-sin., jp-nrt.…)
+doh.pub                   # DNSPod (Tencent Cloud)
+dns.pub                   # DNSPod — hostname alternatif documenté
+dns.alidns.com            # AliDNS (Alibaba) — très utilisé pour contourner les DNS locaux
+dns.tuna.tsinghua.edu.cn  # miroir de l'université Tsinghua
+
+
+# ----------------------------------------------------------------------------
+# 3. AUTRES RÉSOLVEURS PUBLICS NOTABLES
+# ----------------------------------------------------------------------------
+
+# --- Services DNS filtrants / orientés vie privée ---
+freedns.controld.com      # Control D Free DNS — filtre choisi par chemin (/p0…/x-hagezi-*)
+sky.rethinkdns.com        # RethinkDNS (résolveur sur Cloudflare Workers)
+doh.disconnect.app        # Disconnect (upstream Cloudflare)
+dns.blokada.org           # Blokada DNS
+blahdns.com               # couvre doh./doh-jp./doh-de.blahdns.com
+doh.tiar.app              # Tiarap (JP/SG)
+safeservedns.com          # SafeServe (Namecheap)
+
+# --- Résolveurs associatifs / académiques / européens ---
+dns.digitale-gesellschaft.ch   # Digitale Gesellschaft (CH)
+doh.applied-privacy.net        # Foundation for Applied Privacy (AT)
+dns.njal.la                    # Njalla (SE)
+dns.hostux.net                 # Hostux (LU)
+ns0.fdn.fr                     # French Data Network
+ns1.fdn.fr
+doh.ffmuc.net                  # Freifunk München (DE)
+doh.libredns.gr                # LibreDNS (GR)
+odvr.nic.cz                    # CZ.NIC (registre .cz)
+dnsforge.de                    # dnsforge (DE)
+dns.aa.net.uk                  # Andrews & Arnold (UK)
+dns.aquilenet.fr               # Aquilenet (FR, FAI associatif)
+anycast.uncensoreddns.org      # UncensoredDNS (DK)
+resolver.sunet.se              # Sunet (SE)
+public.dns.iij.jp              # Internet Initiative Japan — annoncé jusqu'à mars 2027
+doh.lv                         # NIC.LV (registre .lv)
+doh.nic.lv
+wikimedia-dns.org              # Wikimedia DNS
+doh.seby.io                    # dns.seby.io (AU)
+commons.host                   # ex-résolveur DoH Commons Host — conservé par prudence
+
+
+# ----------------------------------------------------------------------------
+# CAS PARTICULIERS DOCUMENTÉS
+# ----------------------------------------------------------------------------
+# - use-application-dns.net : domaine « canary » utilisé par Firefox pour
+#   détecter la volonté du réseau — NE PAS le bloquer : une réponse NXDOMAIN
+#   ordonne au navigateur de DÉSACTIVER DoH et de revenir au DNS système
+#   filtré, ce qui est exactement le comportement recherché ici.
+# - Control D, CleanBrowsing et DNS4EU choisissent leur politique de filtrage
+#   par le CHEMIN de l'URL (/p0, /doh/family-filter/, …) : le matching par
+#   suffixe sur le domaine bloque toutes les variantes d'un coup.
+# - Plusieurs résolveurs acceptent une IP littérale comme URL DoH
+#   (https://1.1.1.1/, https://9.9.9.9/…) : hors portée du blocage de
+#   domaine — compléter par le blocage IP si le moteur le permet.
